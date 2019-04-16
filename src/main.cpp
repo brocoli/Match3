@@ -11,23 +11,48 @@
 using json = nlohmann::json;
 
 
+#define QUIT_APPLICATION true
+#define KEEP_RUNNING false
+
+
+
+bool processInput() {
+    SDL_Event windowEvent;
+
+    if (SDL_PollEvent(&windowEvent)) {
+        if (windowEvent.type == SDL_QUIT) {
+            return QUIT_APPLICATION;
+        }
+    }
+
+    return KEEP_RUNNING;
+}
+
+void update() {
+}
+
+void render(SDL_Window* const window) {
+}
+
+
+
 #ifdef __cplusplus
 extern "C"
 #endif
 int main(int argc, char* argv[]) {
-    // Set current directory and load initial window configuration file //
+    // Set current directory and load initial engine configuration file //
 
     std::filesystem::path currentDirectory = std::filesystem::path();
 
-    if (!std::filesystem::exists(currentDirectory / "config" / "window.json")) {
+    if (!std::filesystem::exists(currentDirectory / "config" / "engine.json")) {
         // Try the path from std::filesystem::current_path() if relative paths are not working.
         currentDirectory = std::filesystem::current_path();
 
-        if (!std::filesystem::exists(currentDirectory / "config" / "window.json")) {
+        if (!std::filesystem::exists(currentDirectory / "config" / "engine.json")) {
             // Try the path from argv[0] if std::filesystem::current_path() is being masked.
             currentDirectory = std::filesystem::path(argv[0]).parent_path();
 
-            if (!std::filesystem::exists(currentDirectory / "config" / "window.json")) {
+            if (!std::filesystem::exists(currentDirectory / "config" / "engine.json")) {
                 std::cout << "Failed to find config directory." << std::endl
                     << "  std::filesystem::current_path() returns " << std::filesystem::current_path() << std::endl
                     << "  argv[0] is " << argv[0] << std::endl;
@@ -36,11 +61,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    json windowConfig;
+    json engineConfig, windowConfig;
 
-    std::ifstream windowConfigStream(currentDirectory / "config" / "window.json");
-    windowConfigStream >> windowConfig;
-    windowConfigStream.close();
+    std::ifstream engineConfigStream(currentDirectory / "config" / "engine.json");
+    engineConfigStream >> engineConfig;
+    engineConfigStream.close();
+
+    windowConfig = engineConfig["window"];
 
 
     // Initialise SDL //
@@ -85,28 +112,38 @@ int main(int argc, char* argv[]) {
 
     // Main loop //
 
-    SDL_Event windowEvent;
+    unsigned int mainLoopStart = 0;
+    unsigned int nextFrame = 0;
+    unsigned int mainLoopEnd = 0;
+    const unsigned int msPerFrame = engineConfig["msPerFrame"];
 
     while (true) {
-        if (SDL_PollEvent(&windowEvent)) {
-            if (windowEvent.type == SDL_QUIT) {
-                break;
-            }
+        mainLoopStart = SDL_GetTicks();
+        nextFrame = mainLoopStart + msPerFrame;
+
+        if (processInput()) {
+            break;
         }
+        update();
+        render(window);
 
         // TEST //
         SDL_BlitSurface(imageSurface, nullptr, windowSurface, nullptr);
         SDL_UpdateWindowSurface(window);
         // /TEST //
+
+        mainLoopEnd = SDL_GetTicks();
+        if (nextFrame > mainLoopEnd) {
+            SDL_Delay(std::min(nextFrame - mainLoopEnd, msPerFrame));
+        }
     }
 
 
     // Cleanup //
 
     SDL_FreeSurface(imageSurface);
-
     SDL_DestroyWindow(window);
-    SDL_Quit();
 
+    SDL_Quit();
     return EXIT_SUCCESS;
 }
