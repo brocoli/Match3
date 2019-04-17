@@ -7,6 +7,7 @@ namespace Match3 {
 //      (i.e. using a std::vector or a trie).
 const char* MessageBus::KeyPretty[] = {
     "/",
+    "/Test",
     "/Engine/Started",
 };
 
@@ -19,7 +20,8 @@ void MessageBus::Attach(Key key, const std::shared_ptr<Callback> callback) {
 
 void MessageBus::Detach(Key key, const std::shared_ptr<Callback> callback) {
     listeners_[key].erase(callback);
-    if (listeners_[key].empty()) {
+    //TODO: Don't treat the root event as a special case
+    if ((key != Key::_) && listeners_[key].empty()) {
         listeners_.erase(key);
     }
 }
@@ -27,11 +29,14 @@ void MessageBus::Detach(Key key, const std::shared_ptr<Callback> callback) {
 void MessageBus::Notify(Key key, Data data) {
     //TODO: Don't treat the root event as a special case
     //      this is a placeholder for a true tiered-message observer system
-    for (auto listener : listeners_[Key::_]) {
-        if (listener.use_count() < 3) { // original owner + listeners_ + this
-            std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << KeyPretty[Key::_] << "\"?" << std::endl;
-        } else {
-            (*listener)(key, data);
+    if (key != Key::_) {
+        for (auto listener : listeners_[Key::_]) {
+            if (listener.use_count() < 3) { // original owner + listeners_ + this
+                std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << KeyPretty[Key::_] << "\"?" << std::endl;
+                leakDetected_ = true;
+            } else {
+                (*listener)(key, data);
+            }
         }
     }
 
@@ -39,6 +44,7 @@ void MessageBus::Notify(Key key, Data data) {
         for (auto listener : listeners_[key]) {
             if (listener.use_count() < 3) { // original owner + listeners_ + this
                 std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << KeyPretty[key] << "\"?" << std::endl;
+                leakDetected_ = true;
             } else {
                 (*listener)(key, data);
             }

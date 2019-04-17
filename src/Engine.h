@@ -1,5 +1,4 @@
-#ifndef MATCH3_ENGINE_H
-#define MATCH3_ENGINE_H
+#pragma once
 
 #include <filesystem>
 
@@ -47,5 +46,3 @@ private:
 
 
 } // namespace Match3
-
-#endif // !MATCH3_ENGINE_H

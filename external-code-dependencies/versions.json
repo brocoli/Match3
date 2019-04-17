@@ -1,10 +1,4 @@
 {
-  "SDL2": {
-    "name": "SDL2-2.0.9",
-    "version": "2.0.9",
-    "source": "https://www.libsdl.org/release/SDL2-2.0.9.tar.gz",
-    "homepage": "https://www.libsdl.org/index.php"
-  },
   "nlohmann_json": {
     "name": "nlohmann_json",
     "version": "ee4028b8e4cf6a85002a296a461534e2380f0d57",

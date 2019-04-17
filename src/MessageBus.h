@@ -1,5 +1,4 @@
-#ifndef MATCH3_MESSAGE_BUS_H
-#define MATCH3_MESSAGE_BUS_H
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -18,6 +17,7 @@ public:
     //      (i.e. using a std::vector or a trie).
     enum Key {
         _,
+        _Test,
         _Engine_Started,
     };
     static const char* KeyPretty[];
@@ -35,8 +35,12 @@ public:
     void Notify(Key key, Data data);
     void Notify(Key key);
 
+    inline bool GetLeakDetected() { return leakDetected_;  }
+
 private:
     std::unordered_map<Key, std::unordered_set<std::shared_ptr<Callback>>> listeners_{};
+
+    bool leakDetected_ = false;
 
     //TODO: remove this
     std::shared_ptr<Callback> printer_ = std::make_shared<Callback>([](Key key, Data data) -> void {
@@ -45,5 +49,3 @@ private:
 };
 
 } // namespace Match3
-
-#endif // !MATCH3_MESSAGE_BUS_H
