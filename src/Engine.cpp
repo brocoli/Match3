@@ -12,6 +12,7 @@
 using json = nlohmann::json;
 
 #include "MessageBus.h"
+#include "Resources/Resources.h"
 
 
 #define QUIT_APPLICATION true
@@ -21,15 +22,13 @@ using json = nlohmann::json;
 namespace Match3 {
 
 extern MessageBus* _messageBus_;
+extern Resources* _resources_;
 
-Engine::Engine(const std::filesystem::path& currentDirectory) {
-    currentDirectory_ = currentDirectory;
-
+Engine::Engine(const std::filesystem::path& currentDirectory) : currentDirectory_(currentDirectory) {
     {
         std::ifstream engineConfigStream(currentDirectory_ / "config" / "engine.json");
         engineConfigStream >> engineConfig_;
     }
-    windowConfig_ = engineConfig_["window"];
 
 
     // Initialize SDL //
@@ -50,10 +49,11 @@ Engine::Engine(const std::filesystem::path& currentDirectory) {
 
     // Create window //
 
+    json windowConfig = engineConfig_["window"];
     window_ = SDL_CreateWindow(
         "Match3",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        windowConfig_["width"], windowConfig_["height"],
+        windowConfig["width"], windowConfig["height"],
         SDL_WINDOW_ALLOW_HIGHDPI
     );
 
@@ -77,37 +77,19 @@ Engine::Engine(const std::filesystem::path& currentDirectory) {
     SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
 
 
+    // Create resources handler //
+
+    resources_ = new Resources{ currentDirectory, renderer_ };
+
+
     // Notify on the message bus //
 
-    _messageBus_->Notify(MessageBus::Key::_Engine_Started);
-
-
-    // TEST //
-    SDL_Surface* backgroundSurface = IMG_Load((currentDirectory_ / "atlas" / "Backdrop13.jpg").generic_string().c_str());
-    if (backgroundSurface == nullptr) {
-        std::cout << "Failed to load image atlas/Backdrop13.jpg: " << SDL_GetError() << std::endl;
-        finishState_ = ResourceLoadingError;
-        return;
-    }
-
-    backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
-    SDL_FreeSurface(backgroundSurface);
-
-    {
-        json backgroundAtlasConfig;
-        std::ifstream backgroundAtlasStream(currentDirectory_ / "atlas" / "Backdrop13.jpg.json");
-        backgroundAtlasStream >> backgroundAtlasConfig;
-        json backgroundAtlasBackgroundImage = backgroundAtlasConfig["images"]["background"];
-
-        backgroundRect_.x = backgroundAtlasBackgroundImage["x"];
-        backgroundRect_.y = backgroundAtlasBackgroundImage["y"];
-        backgroundRect_.w = backgroundAtlasBackgroundImage["w"];
-        backgroundRect_.h = backgroundAtlasBackgroundImage["h"];
-    }
-    // /TEST //
+    _messageBus_->Notify("/Engine/Started");
 }
 
 Engine::~Engine() {
+    delete resources_;
+
     SDL_DestroyRenderer(renderer_);
     SDL_DestroyWindow(window_);
     IMG_Quit();
@@ -157,7 +139,11 @@ void Engine::update() {
 void Engine::render() {
     SDL_RenderClear(renderer_);
     // TEST //
-    SDL_RenderCopy(renderer_, backgroundTexture_, &backgroundRect_, &backgroundRect_);
+    auto atlas = _resources_->GetAtlasHandler()->Get("Backdrop13.jpg");
+    auto rects = atlas->rects_;
+    SDL_Rect srcRect = rects["background"];
+    SDL_Rect dstRect(srcRect);
+    SDL_RenderCopy(renderer_, atlas->texture_, &srcRect, &dstRect);
     // /TEST //
     SDL_RenderPresent(renderer_);
 }

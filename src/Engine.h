@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "Resources/Resources.h"
+
 
 namespace Match3 {
 
@@ -25,25 +27,21 @@ public:
     void Run();
     FinishState GetFinishState() { return finishState_; }
 
+    Resources* GetResources() { return resources_; }
+
 private:
     bool processInput();
     void update();
     void render();
 
-    FinishState finishState_ = Nothing;
-
-    json engineConfig_;
-    json windowConfig_;
-
     std::filesystem::path currentDirectory_;
+    json engineConfig_;
 
     SDL_Window* window_ = nullptr;
     SDL_Renderer* renderer_ = nullptr;
+    Resources* resources_ = nullptr;
 
-    // TEST //
-    SDL_Texture* backgroundTexture_ = nullptr;
-    SDL_Rect backgroundRect_;
-    // /TEST //
+    FinishState finishState_ = Nothing;
 };
 
 

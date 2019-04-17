@@ -3,36 +3,28 @@
 
 namespace Match3 {
 
-//TODO: dynamically generate keys from strings, for ease of use.
-//      (i.e. using a std::vector or a trie).
-const char* MessageBus::KeyPretty[] = {
-    "/",
-    "/Test",
-    "/Engine/Started",
-};
-
-void MessageBus::Attach(Key key, const std::shared_ptr<Callback> callback) {
+void MessageBus::Attach(const Key& key, const CallbackPtr callback) {
     if (listeners_.find(key) == listeners_.end()) {
         listeners_[key] = std::unordered_set<std::shared_ptr<Callback>>();
     }
     listeners_[key].insert(callback);
 }
 
-void MessageBus::Detach(Key key, const std::shared_ptr<Callback> callback) {
+void MessageBus::Detach(const Key& key, const CallbackPtr callback) {
     listeners_[key].erase(callback);
     //TODO: Don't treat the root event as a special case
-    if ((key != Key::_) && listeners_[key].empty()) {
+    if ((key != "/") && listeners_[key].empty()) {
         listeners_.erase(key);
     }
 }
 
-void MessageBus::Notify(Key key, Data data) {
+void MessageBus::Notify(const Key& key, Data data) {
     //TODO: Don't treat the root event as a special case
-    //      this is a placeholder for a true tiered-message observer system
-    if (key != Key::_) {
-        for (auto listener : listeners_[Key::_]) {
+    //      implement message signal tiers instead
+    if (key != "/") {
+        for (auto listener : listeners_["/"]) {
             if (listener.use_count() < 3) { // original owner + listeners_ + this
-                std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << KeyPretty[Key::_] << "\"?" << std::endl;
+                std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"/\"?" << std::endl;
                 leakDetected_ = true;
             } else {
                 (*listener)(key, data);
@@ -43,7 +35,7 @@ void MessageBus::Notify(Key key, Data data) {
     if (listeners_.find(key) != listeners_.end()) {
         for (auto listener : listeners_[key]) {
             if (listener.use_count() < 3) { // original owner + listeners_ + this
-                std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << KeyPretty[key] << "\"?" << std::endl;
+                std::cout << "Leak detected in MessageBus. Did you forget to Detach from \"" << key << "\"?" << std::endl;
                 leakDetected_ = true;
             } else {
                 (*listener)(key, data);
@@ -54,7 +46,7 @@ void MessageBus::Notify(Key key, Data data) {
 
 static const std::shared_ptr<const json> dummy = std::make_shared<const json>(json{});
 
-void MessageBus::Notify(Key key) {
+void MessageBus::Notify(const Key& key) {
     Notify(key, dummy);
 }
 

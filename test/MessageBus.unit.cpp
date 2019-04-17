@@ -8,7 +8,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         Match3::MessageBus messageBus;
         int listenerTriggerCount = 0;
 
-        std::shared_ptr<Match3::MessageBus::Callback> cb = std::make_shared<Match3::MessageBus::Callback>(
+        Match3::MessageBus::CallbackPtr cb = std::make_shared<Match3::MessageBus::Callback>(
             [&listenerTriggerCount](Match3::MessageBus::Key, Match3::MessageBus::Data) {
                 ++listenerTriggerCount;
             }
@@ -16,7 +16,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
 
         AND_GIVEN("no listener is attached") {
             WHEN("we notify the root event") {
-                messageBus.Notify(Match3::MessageBus::Key::_);
+                messageBus.Notify("/");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
@@ -24,7 +24,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
             }
 
             WHEN("we notify the leaf event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
@@ -33,10 +33,10 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         }
 
         AND_GIVEN("a listener is attached to a leaf event") {
-            messageBus.Attach(Match3::MessageBus::Key::_Test, cb);
+            messageBus.Attach("/Test", cb);
 
             WHEN("we notify the root event") {
-                messageBus.Notify(Match3::MessageBus::Key::_);
+                messageBus.Notify("/");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
@@ -44,7 +44,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
             }
 
             WHEN("we notify the leaf event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("the listener is called") {
                     REQUIRE(listenerTriggerCount == 1);
@@ -53,10 +53,10 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         }
 
         AND_GIVEN("a listener is attached to the root event") {
-            messageBus.Attach(Match3::MessageBus::Key::_, cb);
+            messageBus.Attach("/", cb);
 
             WHEN("we notify the root event") {
-                messageBus.Notify(Match3::MessageBus::Key::_);
+                messageBus.Notify("/");
 
                 THEN("the listener is called") {
                     REQUIRE(listenerTriggerCount == 1);
@@ -64,7 +64,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
             }
 
             WHEN("we notify the leaf event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("the listener is called") {
                     REQUIRE(listenerTriggerCount == 1);
@@ -73,11 +73,11 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         }
 
         AND_GIVEN("a listener is attached to both the root event and a leaf event") {
-            messageBus.Attach(Match3::MessageBus::Key::_, cb);
-            messageBus.Attach(Match3::MessageBus::Key::_Test, cb);
+            messageBus.Attach("/", cb);
+            messageBus.Attach("/Test", cb);
 
             WHEN("we notify the root event") {
-                messageBus.Notify(Match3::MessageBus::Key::_);
+                messageBus.Notify("/");
 
                 THEN("the listener is called once") {
                     REQUIRE(listenerTriggerCount == 1);
@@ -85,7 +85,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
             }
 
             WHEN("we notify the leaf event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("The listener is called twice") {
                     REQUIRE(listenerTriggerCount == 2);
@@ -94,11 +94,11 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         }
 
         AND_GIVEN("a listener is attached and then detached") {
-            messageBus.Attach(Match3::MessageBus::Key::_Test, cb);
-            messageBus.Detach(Match3::MessageBus::Key::_Test, cb);
+            messageBus.Attach("/Test", cb);
+            messageBus.Detach("/Test", cb);
 
             WHEN("we notify the root event") {
-                messageBus.Notify(Match3::MessageBus::Key::_);
+                messageBus.Notify("/");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
@@ -106,7 +106,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
             }
 
             WHEN("we notify the leaf event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
@@ -116,16 +116,16 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
 
         AND_GIVEN("we attach a listener to it, and then leak the listener") {
             {
-                std::shared_ptr<Match3::MessageBus::Callback> cb = std::make_shared<Match3::MessageBus::Callback>(
+                Match3::MessageBus::CallbackPtr cb = std::make_shared<Match3::MessageBus::Callback>(
                     [&listenerTriggerCount](Match3::MessageBus::Key, Match3::MessageBus::Data) {
                         ++listenerTriggerCount;
                     }
                 );
-                messageBus.Attach(Match3::MessageBus::Key::_Test, cb);
+                messageBus.Attach("/Test", cb);
             }
 
             WHEN("we notify the event") {
-                messageBus.Notify(Match3::MessageBus::Key::_Test);
+                messageBus.Notify("/Test");
 
                 THEN("the listener is not called") {
                     REQUIRE(listenerTriggerCount == 0);
