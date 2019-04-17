@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+
 namespace Match3 {
 
 struct Atlas {

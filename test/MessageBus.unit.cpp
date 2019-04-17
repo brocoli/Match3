@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../src/MessageBus.h"
+#include "MessageBus.h"
 
 
 SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {

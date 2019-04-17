@@ -83,6 +83,7 @@ include(CTest)
 include(Catch)
 
 set(EXECUTABLE_INCLUDE_DIRECTORIES
+    PRIVATE "${CMAKE_SOURCE_DIR}/src"
     PRIVATE "${EXTERNAL_DYNAMIC}/SDL2/include"
     PRIVATE "${EXTERNAL_DYNAMIC}/SDL2_image/include"
     PRIVATE "${EXTERNAL_DYNAMIC}/SDL2_ttf/include"
@@ -115,6 +116,7 @@ set_property(TARGET "${UNIT_TESTS_NAME}" PROPERTY CXX_STANDARD 17)
 
 target_include_directories("${UNIT_TESTS_NAME}"
     ${EXECUTABLE_INCLUDE_DIRECTORIES}
+    "${CMAKE_SOURCE_DIR}/test"
 )
 
 target_link_libraries("${UNIT_TESTS_NAME}"

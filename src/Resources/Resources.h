@@ -6,7 +6,6 @@
 #include <filesystem>
 
 
-
 namespace Match3 {
 
 class Resources {
