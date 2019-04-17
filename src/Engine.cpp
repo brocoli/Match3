@@ -63,25 +63,52 @@ Engine::Engine(const std::filesystem::path& currentDirectory) {
         return;
     }
 
+
+    // Create renderer //
+
+    renderer_ = SDL_CreateRenderer(window_, -1, 0);
+
+    if (renderer_ == nullptr) {
+        std::cout << "Failed to create renderer: " << SDL_GetError() << std::endl;
+        finishState_ = InitializationError;
+        return;
+    }
+
+    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
+
+
+    // Notify on the message bus //
+
     _messageBus_->Notify(MessageBus::Key::_Engine_Started);
 
 
     // TEST //
-    backgroundSurface_ = IMG_Load((currentDirectory_ / "img" / "Backdrop13.jpg").generic_string().c_str());
-
-    if (backgroundSurface_ == nullptr) {
-        std::cout << "Failed to load texture img/Backdrop13.jpg: " << SDL_GetError() << std::endl;
+    SDL_Surface* backgroundSurface = IMG_Load((currentDirectory_ / "atlas" / "Backdrop13.jpg").generic_string().c_str());
+    if (backgroundSurface == nullptr) {
+        std::cout << "Failed to load image atlas/Backdrop13.jpg: " << SDL_GetError() << std::endl;
         finishState_ = ResourceLoadingError;
         return;
+    }
+
+    backgroundTexture_ = SDL_CreateTextureFromSurface(renderer_, backgroundSurface);
+    SDL_FreeSurface(backgroundSurface);
+
+    {
+        json backgroundAtlasConfig;
+        std::ifstream backgroundAtlasStream(currentDirectory_ / "atlas" / "Backdrop13.jpg.json");
+        backgroundAtlasStream >> backgroundAtlasConfig;
+        json backgroundAtlasBackgroundImage = backgroundAtlasConfig["images"]["background"];
+
+        backgroundRect_.x = backgroundAtlasBackgroundImage["x"];
+        backgroundRect_.y = backgroundAtlasBackgroundImage["y"];
+        backgroundRect_.w = backgroundAtlasBackgroundImage["w"];
+        backgroundRect_.h = backgroundAtlasBackgroundImage["h"];
     }
     // /TEST //
 }
 
 Engine::~Engine() {
-    // TEST //
-    SDL_FreeSurface(backgroundSurface_);
-    // /TEST //
-
+    SDL_DestroyRenderer(renderer_);
     SDL_DestroyWindow(window_);
     IMG_Quit();
     SDL_Quit();
@@ -128,12 +155,11 @@ void Engine::update() {
 }
 
 void Engine::render() {
+    SDL_RenderClear(renderer_);
     // TEST //
-    SDL_Surface*const windowSurface = SDL_GetWindowSurface(window_);
-
-    SDL_BlitSurface(backgroundSurface_, nullptr, windowSurface, nullptr);
-    SDL_UpdateWindowSurface(window_);
+    SDL_RenderCopy(renderer_, backgroundTexture_, &backgroundRect_, &backgroundRect_);
     // /TEST //
+    SDL_RenderPresent(renderer_);
 }
 
 } // namespace Match3

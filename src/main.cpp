@@ -8,7 +8,6 @@
 namespace Match3 {
 
 // Globals //
-Engine* _engine_ = nullptr;
 MessageBus* _messageBus_ = nullptr;
 
 } // namespace Match3
@@ -46,7 +45,6 @@ int main(int argc, char* argv[]) {
         Match3::_messageBus_ = &messageBus;
 
         Match3::Engine engine(currentDirectory);
-        Match3::_engine_ = &engine;
         engine.Run();
 
         if (engine.GetFinishState() != Match3::Engine::FinishState::WindowClosed) {
@@ -55,7 +53,6 @@ int main(int argc, char* argv[]) {
         }
     }
     Match3::_messageBus_ = nullptr;
-    Match3::_engine_ = nullptr;
 
     return EXIT_SUCCESS;
 }

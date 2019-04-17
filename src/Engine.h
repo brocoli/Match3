@@ -38,9 +38,11 @@ private:
     std::filesystem::path currentDirectory_;
 
     SDL_Window* window_ = nullptr;
+    SDL_Renderer* renderer_ = nullptr;
 
     // TEST //
-    SDL_Surface* backgroundSurface_ = nullptr;
+    SDL_Texture* backgroundTexture_ = nullptr;
+    SDL_Rect backgroundRect_;
     // /TEST //
 };
 
