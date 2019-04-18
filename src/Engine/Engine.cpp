@@ -147,10 +147,9 @@ bool Engine::processInput() {
                         { "y", mouseInputStartY_ },
                         { "initialX", mouseInputStartX_ },
                         { "initialY", mouseInputStartY_ },
-                        { "phase", "started" },
                     });
 
-                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                    _messageBus_->Notify("/Engine/Input/Mouse/Left/Started", data);
                 }
             } break;
             case SDL_MOUSEBUTTONUP: {
@@ -161,14 +160,13 @@ bool Engine::processInput() {
                         { "y", event->y },
                         { "initialX", mouseInputStartX_ },
                         { "initialY", mouseInputStartY_ },
-                        { "phase", "stopped" },
                     });
 
                     mouseInputStartX_ = -1;
                     mouseInputStartY_ = -1;
                     mouseLeftButtonIsDown_ = false;
 
-                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                    _messageBus_->Notify("/Engine/Input/Mouse/Left/Stopped", data);
                 }
             } break;
             case SDL_MOUSEMOTION: {
@@ -179,9 +177,8 @@ bool Engine::processInput() {
                         { "y", event->y },
                         { "initialX", mouseInputStartX_ },
                         { "initialY", mouseInputStartY_ },
-                        { "phase", "moved" },
                     });
-                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                    _messageBus_->Notify("/Engine/Input/Mouse/Left/Moved", data);
                 }
             } break;
             default: {

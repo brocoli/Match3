@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <queue>
 
 #include <nlohmann/json.hpp>
@@ -13,6 +14,8 @@ using json = nlohmann::json;
 
 namespace Match3 {
 
+using Size2D = std::pair<size_t, size_t>;
+
 class GridView {
 public:
     using Cell = AtlasImage;
@@ -22,10 +25,24 @@ public:
     ~GridView();
 private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
+    std::optional<Size2D> calculateCoordinatesFromXY(int x, int y);
+
     void reifyGridDelta(MessageBus::Data gridDelta);
+
     void fillTile(size_t j, size_t i, size_t value);
 
+    void pickUpTileByPosition(int x, int y);
+    void dragHeldTile(int x, int y, int initialX, int initialY);
+    void releaseHeldTile(int x, int y, int initialX, int initialY);
+
     MessageBus::CallbackPtr onGridModelChanged_;
+
+    MessageBus::CallbackPtr onMouseLeftStarted_;
+    MessageBus::CallbackPtr onMouseLeftStopped_;
+    MessageBus::CallbackPtr onMouseLeftMoved_;
+
+    size_t cellsX_;
+    size_t cellsY_;
 
     int layoutCellWidth_;
     int layoutCellHeight_;
@@ -52,6 +69,7 @@ private:
     std::priority_queue<std::shared_ptr<Cell>, std::vector<std::shared_ptr<Cell>>, ImagePoolCompare> tilePool_;
 
     Util::Array2D<std::shared_ptr<Cell>> tileImageByGridPosition_;
+    std::shared_ptr<Cell> heldTile_;
 };
 
 } // namespace Match3
