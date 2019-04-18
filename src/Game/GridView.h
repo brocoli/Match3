@@ -27,9 +27,10 @@ private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
     std::optional<Size2D> calculateCoordinatesFromXY(int x, int y);
 
-    void reifyGridDelta(MessageBus::Data gridDelta);
+    void enactActionLogDelta(MessageBus::Data gridDelta);
 
     void fillTile(size_t j, size_t i, size_t value);
+    void swapTiles(size_t j, size_t i, size_t oj, size_t oi);
 
     void pickUpTileByPosition(int x, int y);
     void dragHeldTile(int x, int y, int initialX, int initialY);

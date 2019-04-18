@@ -71,11 +71,11 @@ GridView::GridView() :
 
 
     onGridModelChanged_ = std::make_shared<MessageBus::Callback>(
-        [this](const MessageBus::Key&, MessageBus::Data gridDelta) -> void {
-            reifyGridDelta(gridDelta);
+        [this](const MessageBus::Key&, MessageBus::Data actionLogDelta) -> void {
+            enactActionLogDelta(actionLogDelta);
         }
     );
-    _messageBus_->Attach("/Game/Grid/Model/Changed", onGridModelChanged_);
+    _messageBus_->Attach("/Game/Grid/Logic/ActionLog/Changed", onGridModelChanged_);
 
 
     onMouseLeftStarted_ = std::make_shared<MessageBus::Callback>(
@@ -101,10 +101,10 @@ GridView::GridView() :
 }
 
 GridView::~GridView() {
-    _messageBus_->Detach("/Game/Grid/Model/Changed", onGridModelChanged_);
+    _messageBus_->Detach("/Game/Grid/Logic/ActionLog/Changed", onGridModelChanged_);
 
-    _messageBus_->Detach("/Engine/Input/Mouse/Left/Moved", onMouseLeftMoved_);
     _messageBus_->Detach("/Engine/Input/Mouse/Left/Stopped", onMouseLeftStopped_);
+    _messageBus_->Detach("/Engine/Input/Mouse/Left/Moved", onMouseLeftMoved_);
     _messageBus_->Detach("/Engine/Input/Mouse/Left/Started", onMouseLeftStarted_);
 }
 
@@ -138,12 +138,14 @@ std::optional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
     return std::optional<Size2D>({(size_t)j, (size_t)i});
 }
 
-void GridView::reifyGridDelta(MessageBus::Data gridDelta) {
-    for each (json delta in (*gridDelta)) {
-        if (delta["command"] == "fill") {
+void GridView::enactActionLogDelta(MessageBus::Data actionLogDelta) {
+    for each (json delta in (*actionLogDelta)) {
+        if (delta["action"] == "fill") {
             for each (json tile in delta["tiles"]) {
                 fillTile(tile["x"], tile["y"], tile["value"]);
             }
+        } else if (delta["action"] == "tileSwap") {
+            swapTiles(delta["tiles"][0][0], delta["tiles"][0][1], delta["tiles"][1][0], delta["tiles"][1][1]);
         }
     }
 }
@@ -157,6 +159,17 @@ void GridView::fillTile(size_t j, size_t i, size_t tileType) {
     tile->SetVisible(true);
 
     tileImageByCoordinates_[i][j] = tile;
+}
+
+void GridView::swapTiles(size_t j, size_t i, size_t oj, size_t oi) {
+    std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+    std::shared_ptr<Cell> otherTile = tileImageByCoordinates_[oi][oj];
+
+    tileImageByCoordinates_[i][j] = otherTile;
+    tileImageByCoordinates_[oi][oj] = tile;
+
+    tile->SetXY(calculateXYFromCoordinates(oj, oi));
+    otherTile->SetXY(calculateXYFromCoordinates(j, i));
 }
 
 void GridView::pickUpTileByPosition(int x, int y) {
@@ -282,13 +295,15 @@ void GridView::releaseHeldTile(int x, int y, int initialX, int initialY) {
         bool shouldNotifyLogicInput = std::abs(valueToCheck) > inputSensitivityPosition_;
 
         // Clean held tile pointers
-        // TODO: do these translations with tweens, otherwise they'll look awful
-        heldTile_->SetXY(heldTileOriginalPosition_);
+        if (!shouldNotifyLogicInput) {
+            heldTile_->SetXY(heldTileOriginalPosition_);
+        }
         heldTile_ = nullptr;
 
         if (interactedTile_ != nullptr) {
-            // TODO: do these translations with tweens, otherwise they'll look awful
-            interactedTile_->SetXY(interactedTileOriginalPosition_);
+            if (!shouldNotifyLogicInput) {
+                interactedTile_->SetXY(interactedTileOriginalPosition_);
+            }
             interactedTile_ = nullptr;
         }
 
