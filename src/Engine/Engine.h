@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <random>
 
 #include <SDL.h>
 
@@ -22,7 +23,7 @@ public:
         WindowClosed,
     };
 
-    Engine(const std::filesystem::path& currentDirectory);
+    Engine(const std::filesystem::path& currentDirectory, unsigned int randomSeed);
     ~Engine();
 
     void Run();
@@ -30,6 +31,8 @@ public:
     FinishState GetFinishState() { return finishState_; }
     const std::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
     std::shared_ptr<Resources> GetResources() { return resources_; }
+    std::mt19937& GetRandomGenerator() { return randomGenerator_; }
+    const json& GetWindowConfiguration() const { return engineConfig_["window"]; }
 
     void InsertRenderable(std::shared_ptr<Renderable> renderable) { renderables_.push_back(renderable); }
 
@@ -38,6 +41,7 @@ private:
     void render();
 
     std::filesystem::path currentDirectory_;
+    std::mt19937 randomGenerator_;
     json engineConfig_;
 
     SDL_Window* window_ = nullptr;

@@ -11,6 +11,8 @@
 
 namespace Match3 {
 
+using Int2D = std::pair<int, int>;
+
 class AtlasImage : public Renderable {
 public:
     AtlasImage(const std::string& atlasName, const std::string& imageName, int x, int y, bool visible);
@@ -19,9 +21,10 @@ public:
 
     void SetImage(const std::string& imageName);
     void SetVisible(bool visible) { visible_ = visible; }
-    void SetXY(int x, int y) { dstRect_.x = x; dstRect_.y = y; }
+    void SetXY(Int2D xy) { dstRect_.x = xy.first; dstRect_.y = xy.second; }
 
     bool IsVisible() const { return visible_; }
+    Int2D GetXY() const { return Int2D(dstRect_.x, dstRect_.y); }
 
 private:
     std::shared_ptr<const Atlas> atlas_;

@@ -41,6 +41,7 @@ void Game::insertBackgroundImage() {
 
 void Game::createGridView() {
     gridView_ = std::make_shared<GridView>();
+    gridView_->FillGrid();
 }
 
 } // namespace Match3

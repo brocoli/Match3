@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <random>
 
 #include "Engine/Engine.h"
 #include "Engine/MessageBus.h"
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
         Match3::MessageBus messageBus;
         Match3::_messageBus_ = &messageBus;
 
-        Match3::Engine engine(currentDirectory);
+        Match3::Engine engine(currentDirectory, std::random_device()());
         Match3::_engine_ = &engine;
 
         Match3::Game game;

@@ -23,11 +23,15 @@ namespace Match3 {
 
 extern MessageBus* _messageBus_;
 
-Engine::Engine(const std::filesystem::path& currentDirectory) : currentDirectory_(currentDirectory) {
+Engine::Engine(const std::filesystem::path& currentDirectory, unsigned int randomSeed) :
+    currentDirectory_(currentDirectory),
+    randomGenerator_(std::mt19937(randomSeed))
+{
     {
         std::ifstream engineConfigStream(currentDirectory_ / "config" / "engine.json");
         engineConfigStream >> engineConfig_;
     }
+
 
     // Initialize SDL //
 
