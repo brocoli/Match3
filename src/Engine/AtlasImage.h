@@ -27,7 +27,10 @@ public:
     void SetXY(Int2D xy) { dstRect_.x = xy.first; dstRect_.y = xy.second; }
 
     bool IsVisible() const { return visible_; }
+
     Int2D GetXY() const { return Int2D(dstRect_.x, dstRect_.y); }
+    int GetX() const { return dstRect_.x; }
+    int GetY() const { return dstRect_.y; }
 
 private:
     std::shared_ptr<const Atlas> atlas_;

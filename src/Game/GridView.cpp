@@ -6,6 +6,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "Util/Signum.h"
+
 #include "Engine/AtlasImage.h"
 #include "Engine/Engine.h"
 #include "Engine/MessageBus.h"
@@ -16,7 +18,12 @@ namespace Match3 {
 extern MessageBus* _messageBus_;
 extern Engine* _engine_;
 
-GridView::GridView() : tileImageByGridPosition_(0, 0, nullptr), heldTile_(nullptr) {
+GridView::GridView() :
+    tileImageByCoordinates_(0, 0, nullptr),
+    heldTile_(nullptr), heldTileOriginalCoordinates_{ 0, 0 }, heldTileOriginalPosition_{ 0, 0 },
+    interactedTile_(nullptr), interactedTileOriginalCoordinates_{ 0, 0 }, interactedTileOriginalPosition_{ 0, 0 },
+    lastDragDelta_{ 0, 0 }, dragMovementVelocity_{ 0, 0 }
+{
     json configuration;
     {
         std::ifstream configurationStream(_engine_->GetCurrentDirectory() / "config" / "grid.json");
@@ -51,7 +58,7 @@ GridView::GridView() : tileImageByGridPosition_(0, 0, nullptr), heldTile_(nullpt
         tilePool_.emplace(img);
     }
 
-    tileImageByGridPosition_ = Util::Array2D<std::shared_ptr<Cell>>(cellsY_, cellsX_, nullptr);
+    tileImageByCoordinates_ = Util::Array2D<std::shared_ptr<Cell>>(cellsY_, cellsX_, nullptr);
 
 
     onGridModelChanged_ = std::make_shared<MessageBus::Callback>(
@@ -140,7 +147,7 @@ void GridView::fillTile(size_t j, size_t i, size_t tileType) {
     tile->SetXY(calculateXYFromCoordinates(j, i));
     tile->SetVisible(true);
 
-    tileImageByGridPosition_[i][j] = tile;
+    tileImageByCoordinates_[i][j] = tile;
 }
 
 void GridView::pickUpTileByPosition(int x, int y) {
@@ -151,7 +158,10 @@ void GridView::pickUpTileByPosition(int x, int y) {
         size_t j = coords.first;
         size_t i = coords.second;
 
-        heldTile_ = tileImageByGridPosition_[i][j];
+        heldTile_ = tileImageByCoordinates_[i][j];
+        heldTileOriginalCoordinates_ = coords;
+        heldTileOriginalPosition_ = calculateXYFromCoordinates(j, i);
+
         _engine_->ToFrontRenderable(heldTile_);
 
         dragHeldTile(x, y, x, y);
@@ -160,14 +170,93 @@ void GridView::pickUpTileByPosition(int x, int y) {
 
 void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
     if (heldTile_ != nullptr) {
-        heldTile_->SetXY(Int2D{ x, y });
+        int deltaX = x - initialX;
+        int deltaY = y - initialY;
+
+        size_t j = heldTileOriginalCoordinates_.first;
+        size_t i = heldTileOriginalCoordinates_.second;
+
+        // First clamp deltas to valid moves in the grid
+        if (heldTileOriginalCoordinates_.first <= 0) {
+            deltaX = std::max(0, deltaX);
+        } else if (cellsX_ - 1 <= heldTileOriginalCoordinates_.first) {
+            deltaX = std::min(deltaX, 0);
+        }
+
+        if (heldTileOriginalCoordinates_.second <= 0) {
+            deltaY = std::max(0, deltaY);
+        }
+        else if (cellsX_ - 1 <= heldTileOriginalCoordinates_.second) {
+            deltaY = std::min(deltaY, 0);
+        }
+
+        // Find most significant delta and zero out the other
+        int absDeltaX = std::abs(deltaX);
+        int absDeltaY = std::abs(deltaY);
+
+        if (absDeltaX == absDeltaY) {
+            // Just reset positions and leave if they're the same
+            dragMovementVelocity_ = Int2D{ 0, 0 };
+            lastDragDelta_ = Int2D{ 0, 0 };
+
+            heldTile_->SetXY(heldTileOriginalPosition_);
+            if (interactedTile_ != nullptr) {
+                interactedTile_->SetXY(interactedTileOriginalPosition_);
+            }
+            return;
+        }
+
+        if (absDeltaX < absDeltaY) {
+            deltaX = 0;
+            absDeltaX = 0;
+        } else {
+            deltaY = 0;
+            absDeltaY = 0;
+        }
+
+        // Cap movement at one tile distance
+        int signJ = Util::signum(deltaX);
+        int signI = Util::signum(deltaY);
+
+        deltaX = signJ * std::min(absDeltaX, layoutCellWidth_ + layoutCellMarginX_);
+        deltaY = signI * std::min(absDeltaY, layoutCellHeight_ + layoutCellMarginY_);
+
+        // Find interacted tile and track it if necessary
+        int otherI = (int)i + signI;
+        int otherJ = (int)j + signJ;
+
+        std::shared_ptr<Cell> otherTile = tileImageByCoordinates_[otherI][otherJ];
+        if (interactedTile_ != otherTile) {
+            if (interactedTile_ != nullptr) {
+                interactedTile_->SetXY(interactedTileOriginalPosition_);
+            }
+
+            interactedTile_ = otherTile;
+            interactedTileOriginalCoordinates_.first = otherJ;
+            interactedTileOriginalCoordinates_.second = otherI;
+            interactedTileOriginalPosition_ = calculateXYFromCoordinates(otherJ, otherI);
+        }
+
+        // Update positions
+        dragMovementVelocity_ = Int2D{ deltaX - lastDragDelta_.first, deltaY - lastDragDelta_.second };
+        lastDragDelta_ = Int2D{ deltaX, deltaY };
+
+        heldTile_->SetXY(Int2D{ heldTileOriginalPosition_.first + deltaX, heldTileOriginalPosition_.second + deltaY });
+        interactedTile_->SetXY(Int2D{ interactedTileOriginalPosition_.first - deltaX, interactedTileOriginalPosition_.second - deltaY });
     }
 }
 
 void GridView::releaseHeldTile(int x, int y, int initialX, int initialY) {
     if (heldTile_ != nullptr) {
         dragHeldTile(x, y, initialX, initialY);
+
+        heldTile_->SetXY(heldTileOriginalPosition_);
         heldTile_ = nullptr;
+
+        if (interactedTile_ != nullptr) {
+            interactedTile_->SetXY(interactedTileOriginalPosition_);
+            interactedTile_ = nullptr;
+        }
     }
 }
 

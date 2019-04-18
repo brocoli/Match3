@@ -68,8 +68,18 @@ private:
     };
     std::priority_queue<std::shared_ptr<Cell>, std::vector<std::shared_ptr<Cell>>, ImagePoolCompare> tilePool_;
 
-    Util::Array2D<std::shared_ptr<Cell>> tileImageByGridPosition_;
+    Util::Array2D<std::shared_ptr<Cell>> tileImageByCoordinates_;
+
     std::shared_ptr<Cell> heldTile_;
+    Int2D heldTileOriginalPosition_;
+    Size2D heldTileOriginalCoordinates_;
+
+    std::shared_ptr<Cell> interactedTile_;
+    Int2D interactedTileOriginalPosition_;
+    Size2D interactedTileOriginalCoordinates_;
+
+    Int2D lastDragDelta_;
+    Int2D dragMovementVelocity_;
 };
 
 } // namespace Match3
