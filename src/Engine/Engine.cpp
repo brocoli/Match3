@@ -15,8 +15,8 @@ using json = nlohmann::json;
 #include "Resources/Resources.h"
 
 
-#define QUIT_APPLICATION true
-#define KEEP_RUNNING false
+bool constexpr QUIT_APPLICATION = true;
+bool constexpr KEEP_RUNNING = false;
 
 
 namespace Match3 {
@@ -25,7 +25,10 @@ extern MessageBus* _messageBus_;
 
 Engine::Engine(const std::filesystem::path& currentDirectory, unsigned int randomSeed) :
     currentDirectory_(currentDirectory),
-    randomGenerator_(std::mt19937(randomSeed))
+    randomGenerator_(std::mt19937(randomSeed)),
+    mouseLeftButtonIsDown_(false),
+    mouseInputStartX_(-1),
+    mouseInputStartY_(-1)
 {
     {
         std::ifstream engineConfigStream(currentDirectory_ / "config" / "engine.json");
@@ -119,12 +122,70 @@ void Engine::Run() {
     _messageBus_->Notify("/Engine/Stopped");
 }
 
+void Engine::ToFrontRenderable(std::shared_ptr<Renderable> renderable) {
+    renderables_.remove(renderable);
+    renderables_.push_back(renderable);
+}
+
 bool Engine::processInput() {
     SDL_Event windowEvent;
 
-    if (SDL_PollEvent(&windowEvent)) {
-        if (windowEvent.type == SDL_QUIT) {
-            return QUIT_APPLICATION;
+    while (SDL_PollEvent(&windowEvent) != 0) {
+        switch (windowEvent.type) {
+            case SDL_QUIT: {
+                return QUIT_APPLICATION;
+            } break;
+            case SDL_MOUSEBUTTONDOWN: {
+                auto event = (SDL_MouseButtonEvent*)(&windowEvent);
+                if (event->button == SDL_BUTTON_LEFT) {
+                    mouseInputStartX_ = event->x;
+                    mouseInputStartY_ = event->y;
+                    mouseLeftButtonIsDown_ = true;
+
+                    std::shared_ptr<json> data = std::make_shared<json>(json{
+                        { "x", mouseInputStartX_ },
+                        { "y", mouseInputStartY_ },
+                        { "initialX", mouseInputStartX_ },
+                        { "initialY", mouseInputStartY_ },
+                        { "phase", "started" },
+                    });
+
+                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                }
+            } break;
+            case SDL_MOUSEBUTTONUP: {
+                auto event = (SDL_MouseButtonEvent*)(&windowEvent);
+                if (event->button == SDL_BUTTON_LEFT) {
+                    std::shared_ptr<json> data = std::make_shared<json>(json{
+                        { "x", event->x },
+                        { "y", event->y },
+                        { "initialX", mouseInputStartX_ },
+                        { "initialY", mouseInputStartY_ },
+                        { "phase", "stopped" },
+                    });
+
+                    mouseInputStartX_ = -1;
+                    mouseInputStartY_ = -1;
+                    mouseLeftButtonIsDown_ = false;
+
+                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                }
+            } break;
+            case SDL_MOUSEMOTION: {
+                if (mouseLeftButtonIsDown_) {
+                    auto event = (SDL_MouseMotionEvent*)(&windowEvent);
+                    std::shared_ptr<json> data = std::make_shared<json>(json{
+                        { "x", event->x },
+                        { "y", event->y },
+                        { "initialX", mouseInputStartX_ },
+                        { "initialY", mouseInputStartY_ },
+                        { "phase", "moved" },
+                    });
+                    _messageBus_->Notify("/Engine/Input/Mouse", data);
+                }
+            } break;
+            default: {
+            } break;
         }
     }
 

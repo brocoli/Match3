@@ -17,9 +17,12 @@ class AtlasImage : public Renderable {
 public:
     AtlasImage(const std::string& atlasName, const std::string& imageName, int x, int y, bool visible);
 
-    virtual void Render(SDL_Renderer* renderer);
+    void Render(SDL_Renderer* renderer) override;
+    void SetX(int x) override { dstRect_.x = x; }
+    void SetY(int y) override { dstRect_.y = y; }
 
     void SetImage(const std::string& imageName);
+
     void SetVisible(bool visible) { visible_ = visible; }
     void SetXY(Int2D xy) { dstRect_.x = xy.first; dstRect_.y = xy.second; }
 

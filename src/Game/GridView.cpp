@@ -43,7 +43,7 @@ GridView::GridView() : tileImageByGridPosition_(0, 0, nullptr) {
     size_t totalCells = cellsX * cellsY;
     for (size_t i = 0; i < totalCells; ++i) {
         std::shared_ptr<Cell> img = std::make_shared<Cell>(
-            "Pieces.png", "Color-1",
+            "Pieces.png", tileImageNames_[0],
             0, 0,
             false
         );
@@ -53,13 +53,17 @@ GridView::GridView() : tileImageByGridPosition_(0, 0, nullptr) {
 
     tileImageByGridPosition_ = Util::Array2D<std::shared_ptr<Cell>>(cellsY, cellsX, nullptr);
 
+
     onGridModelChanged_ = std::make_shared<MessageBus::Callback>(
         [this](const MessageBus::Key&, MessageBus::Data gridDelta) -> void {
             reifyGridDelta(gridDelta);
         }
     );
-
     _messageBus_->Attach("/Game/Grid/Model/Changed", onGridModelChanged_);
+}
+
+GridView::~GridView() {
+    _messageBus_->Detach("/Game/Grid/Model/Changed", onGridModelChanged_);
 }
 
 Int2D GridView::calculateXYFromCoordinates(size_t j, size_t i) {

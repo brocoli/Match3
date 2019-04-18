@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <queue>
 
 #include <nlohmann/json.hpp>
@@ -15,8 +16,10 @@ namespace Match3 {
 class GridView {
 public:
     using Cell = AtlasImage;
+    using Task = std::function<bool(void)>;
 
     GridView();
+    ~GridView();
 private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
     void reifyGridDelta(MessageBus::Data gridDelta);

@@ -35,6 +35,7 @@ public:
     const json& GetWindowConfiguration() const { return engineConfig_["window"]; }
 
     void InsertRenderable(std::shared_ptr<Renderable> renderable) { renderables_.push_back(renderable); }
+    void ToFrontRenderable(std::shared_ptr<Renderable> renderable);
 
 private:
     bool processInput();
@@ -48,9 +49,13 @@ private:
     SDL_Renderer* renderer_ = nullptr;
     std::shared_ptr<Resources> resources_;
 
-    std::list<std::shared_ptr<Renderable>> renderables_{};
-
     FinishState finishState_ = Nothing;
+
+    std::list<std::shared_ptr<Renderable>> renderables_;
+
+    bool mouseLeftButtonIsDown_;
+    int mouseInputStartX_;
+    int mouseInputStartY_;
 };
 
 
