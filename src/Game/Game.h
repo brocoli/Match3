@@ -7,7 +7,9 @@ using json = nlohmann::json;
 
 #include "Engine/MessageBus.h"
 
+#include "GridLogic.h"
 #include "GridView.h"
+
 
 namespace Match3 {
 
@@ -20,8 +22,10 @@ private:
     void loadAllGameTextures();
     void insertBackgroundImage();
     void createGridView();
+    void createGridLogic();
 
     MessageBus::CallbackPtr onEngineStarted_;
+    std::shared_ptr<GridLogic> gridLogic_;
     std::shared_ptr<GridView> gridView_;
 };
 

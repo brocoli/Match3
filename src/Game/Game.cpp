@@ -16,6 +16,7 @@ Game::Game() {
             loadAllGameTextures();
             insertBackgroundImage();
             createGridView();
+            createGridLogic();
         }
     );
 
@@ -41,7 +42,10 @@ void Game::insertBackgroundImage() {
 
 void Game::createGridView() {
     gridView_ = std::make_shared<GridView>();
-    gridView_->FillGrid();
+}
+
+void Game::createGridLogic() {
+    gridLogic_ = std::make_shared<GridLogic>();
 }
 
 } // namespace Match3

@@ -6,7 +6,7 @@ namespace Match3 {
 namespace Util {
 
 // Source: https://stackoverflow.com/questions/21943621/how-to-create-a-contiguous-2d-array-in-c
-// (has modifications)
+// (with modifications)
 
 template<class T>
 class Array2D {
@@ -25,7 +25,7 @@ public:
             return data[offset+index];
         }
     };
-    Array2D(size_t r, size_t c) : data (r*c), cols(c) {}
+    Array2D(size_t r, size_t c, T initialValue) : data (r*c, initialValue), cols(c) {}
     // First-level indexing is done in this function.
     Array2DIndexer<T> operator[](size_t index) {
         return Array2DIndexer<T>(index*cols, data);

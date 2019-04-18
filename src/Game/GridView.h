@@ -7,6 +7,7 @@ using json = nlohmann::json;
 
 #include "Util/Array2D.h"
 #include "Engine/AtlasImage.h"
+#include "Engine/MessageBus.h"
 
 
 namespace Match3 {
@@ -16,12 +17,13 @@ public:
     using Cell = AtlasImage;
 
     GridView();
-    void FillGrid();
 private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
+    void reifyGridDelta(MessageBus::Data gridDelta);
+    void fillTile(size_t j, size_t i, size_t value);
 
-    size_t layoutCellsX_;
-    size_t layoutCellsY_;
+    MessageBus::CallbackPtr onGridModelChanged_;
+
     int layoutCellWidth_;
     int layoutCellHeight_;
     int layoutCellMarginX_;
@@ -29,6 +31,8 @@ private:
 
     int layoutOffsetX_;
     int layoutOffsetY_;
+
+    json tileImageNames_;
 
     class ImagePoolCompare {
     public:
