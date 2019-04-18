@@ -30,7 +30,7 @@ void AtlasImage::Render(SDL_Renderer* renderer) {
     }
 }
 
-void AtlasImage::SetToImage(const std::string& imageName) {
+void AtlasImage::SetImage(const std::string& imageName) {
     auto rects = atlas_->rects_;
     srcRect_ = SDL_Rect(rects[imageName]);
 }

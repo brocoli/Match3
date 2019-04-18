@@ -1,0 +1,10 @@
+{
+  "layout": {
+    "cellsX": 8,
+    "cellsY": 8,
+    "cellWidth": 70,
+    "cellHeight": 70,
+    "cellMarginX": 4,
+    "cellMarginY": 4
+  }
+}

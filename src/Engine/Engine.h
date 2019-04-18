@@ -26,8 +26,9 @@ public:
     ~Engine();
 
     void Run();
-    FinishState GetFinishState() { return finishState_; }
 
+    FinishState GetFinishState() { return finishState_; }
+    const std::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
     std::shared_ptr<Resources> GetResources() { return resources_; }
 
     void InsertRenderable(std::shared_ptr<Renderable> renderable) { renderables_.push_back(renderable); }

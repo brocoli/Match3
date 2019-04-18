@@ -15,6 +15,7 @@ Game::Game() {
         [this](const MessageBus::Key&, MessageBus::Data) -> void {
             loadAllGameTextures();
             insertBackgroundImage();
+            createGridView();
         }
     );
 
@@ -36,6 +37,10 @@ void Game::insertBackgroundImage() {
         "Backdrop13.jpg", "background", 0, 0, true
     );
     _engine_->InsertRenderable(background);
+}
+
+void Game::createGridView() {
+    gridView_ = std::make_shared<GridView>();
 }
 
 } // namespace Match3

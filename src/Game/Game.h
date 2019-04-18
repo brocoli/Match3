@@ -1,10 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 #include "Engine/MessageBus.h"
 
+#include "GridView.h"
 
 namespace Match3 {
 
@@ -13,12 +16,13 @@ public:
     Game();
     ~Game();
 
+private:
     void loadAllGameTextures();
     void insertBackgroundImage();
+    void createGridView();
 
-private:
     MessageBus::CallbackPtr onEngineStarted_;
-
+    std::shared_ptr<GridView> gridView_;
 };
 
 } // namespace Match3

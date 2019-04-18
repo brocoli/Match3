@@ -17,11 +17,11 @@ public:
 
     virtual void Render(SDL_Renderer* renderer);
 
-    void SetToImage(const std::string& imageName);
-    void SetVisible(bool visible) { visible_ = visible; };
+    void SetImage(const std::string& imageName);
+    void SetVisible(bool visible) { visible_ = visible; }
+    void SetXY(int x, int y) { dstRect_.x = x; dstRect_.y = y; }
 
-    SDL_Rect& GetSrcRect() { return srcRect_; }
-    SDL_Rect& GetDstRect() { return dstRect_; }
+    bool IsVisible() const { return visible_; }
 
 private:
     std::shared_ptr<const Atlas> atlas_;
