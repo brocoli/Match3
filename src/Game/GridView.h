@@ -78,8 +78,11 @@ private:
     Int2D interactedTileOriginalPosition_;
     Size2D interactedTileOriginalCoordinates_;
 
-    Int2D lastDragDelta_;
+    Int2D currentDragDelta_;
     Int2D dragMovementVelocity_;
+
+    int inputSensitivityPosition_;
+    int inputSensitivityVelocityFactor_;
 };
 
 } // namespace Match3

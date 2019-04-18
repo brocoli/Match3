@@ -22,7 +22,8 @@ GridView::GridView() :
     tileImageByCoordinates_(0, 0, nullptr),
     heldTile_(nullptr), heldTileOriginalCoordinates_{ 0, 0 }, heldTileOriginalPosition_{ 0, 0 },
     interactedTile_(nullptr), interactedTileOriginalCoordinates_{ 0, 0 }, interactedTileOriginalPosition_{ 0, 0 },
-    lastDragDelta_{ 0, 0 }, dragMovementVelocity_{ 0, 0 }
+    currentDragDelta_{ 0, 0 }, dragMovementVelocity_{ 0, 0 },
+    inputSensitivityPosition_(0), inputSensitivityVelocityFactor_(0)
 {
     json configuration;
     {
@@ -33,6 +34,7 @@ GridView::GridView() :
     cellsX_ = configuration["cellsX"];
     cellsY_ = configuration["cellsY"];
 
+
     json layout = configuration["layout"];
 
     layoutCellWidth_ = layout["cellWidth"];
@@ -40,7 +42,14 @@ GridView::GridView() :
     layoutCellMarginX_ = layout["cellMarginX"];
     layoutCellMarginY_ = layout["cellMarginY"];
 
+
     tileImageNames_ = configuration["cellNames"];
+
+
+    const json& inputSensitivity = configuration["inputSensitivity"];
+    inputSensitivityPosition_ = inputSensitivity["position"];
+    inputSensitivityVelocityFactor_ = inputSensitivity["velocityFactor"];
+
 
     const json& window = _engine_->GetWindowConfiguration();
 
@@ -176,10 +185,11 @@ void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
         size_t j = heldTileOriginalCoordinates_.first;
         size_t i = heldTileOriginalCoordinates_.second;
 
-        // First clamp deltas to valid moves in the grid
+        // Clamp deltas to avoid values that correspond to moves outside of the grid
         if (heldTileOriginalCoordinates_.first <= 0) {
             deltaX = std::max(0, deltaX);
-        } else if (cellsX_ - 1 <= heldTileOriginalCoordinates_.first) {
+        }
+        else if (cellsX_ - 1 <= heldTileOriginalCoordinates_.first) {
             deltaX = std::min(deltaX, 0);
         }
 
@@ -190,14 +200,14 @@ void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
             deltaY = std::min(deltaY, 0);
         }
 
-        // Find most significant delta and zero out the other
+        // Find the most significant delta, zero out the other
         int absDeltaX = std::abs(deltaX);
         int absDeltaY = std::abs(deltaY);
 
         if (absDeltaX == absDeltaY) {
-            // Just reset positions and leave if they're the same
+            // Just reset positions and return if they're the same
             dragMovementVelocity_ = Int2D{ 0, 0 };
-            lastDragDelta_ = Int2D{ 0, 0 };
+            currentDragDelta_ = Int2D{ 0, 0 };
 
             heldTile_->SetXY(heldTileOriginalPosition_);
             if (interactedTile_ != nullptr) {
@@ -209,7 +219,8 @@ void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
         if (absDeltaX < absDeltaY) {
             deltaX = 0;
             absDeltaX = 0;
-        } else {
+        }
+        else {
             deltaY = 0;
             absDeltaY = 0;
         }
@@ -238,8 +249,11 @@ void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
         }
 
         // Update positions
-        dragMovementVelocity_ = Int2D{ deltaX - lastDragDelta_.first, deltaY - lastDragDelta_.second };
-        lastDragDelta_ = Int2D{ deltaX, deltaY };
+        dragMovementVelocity_.first = deltaX - currentDragDelta_.first;
+        dragMovementVelocity_.second = deltaY - currentDragDelta_.second;
+
+        currentDragDelta_.first = deltaX;
+        currentDragDelta_.second = deltaY;
 
         heldTile_->SetXY(Int2D{ heldTileOriginalPosition_.first + deltaX, heldTileOriginalPosition_.second + deltaY });
         interactedTile_->SetXY(Int2D{ interactedTileOriginalPosition_.first - deltaX, interactedTileOriginalPosition_.second - deltaY });
@@ -248,15 +262,45 @@ void GridView::dragHeldTile(int x, int y, int initialX, int initialY) {
 
 void GridView::releaseHeldTile(int x, int y, int initialX, int initialY) {
     if (heldTile_ != nullptr) {
-        dragHeldTile(x, y, initialX, initialY);
+        // Calculate whether this release will cause a logic input event
+        int velX = dragMovementVelocity_.first;
+        int velY = dragMovementVelocity_.second;
+        int deltaX = currentDragDelta_.first;
+        int deltaY = currentDragDelta_.second;
 
+        int valueToCheck = 0;
+        char* axisOfMovement;
+
+        if (deltaX != 0 && deltaY == 0) {
+            valueToCheck = deltaX + velX * inputSensitivityVelocityFactor_;
+            axisOfMovement = "x";
+        } else if (deltaY != 0 && deltaX == 0) {
+            valueToCheck = deltaY + velY * inputSensitivityVelocityFactor_;
+            axisOfMovement = "y";
+        }
+
+        bool shouldNotifyLogicInput = std::abs(valueToCheck) > inputSensitivityPosition_;
+
+        // Clean held tile pointers
+        // TODO: do these translations with tweens, otherwise they'll look awful
         heldTile_->SetXY(heldTileOriginalPosition_);
         heldTile_ = nullptr;
 
         if (interactedTile_ != nullptr) {
+            // TODO: do these translations with tweens, otherwise they'll look awful
             interactedTile_->SetXY(interactedTileOriginalPosition_);
             interactedTile_ = nullptr;
         }
+
+        // Notify input event if appropriate
+        if (shouldNotifyLogicInput) {
+            _messageBus_->Notify("/Game/Grid/View/Input/Swap", std::make_shared<const json>(json{
+                { "axis", axisOfMovement },
+                { "sign", Util::signum(valueToCheck) },
+                { "j", heldTileOriginalCoordinates_.first },
+                { "i", heldTileOriginalCoordinates_.second },
+            }));
+        };
     }
 }
 

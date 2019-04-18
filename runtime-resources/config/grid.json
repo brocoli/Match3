@@ -13,5 +13,9 @@
     "Color-3",
     "Color-4",
     "Color-5"
-  ]
+  ],
+  "inputSensitivity": {
+    "position": 46,
+    "velocityFactor": 2
+  }
 }
