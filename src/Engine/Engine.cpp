@@ -102,7 +102,7 @@ void Engine::Run() {
         if (processInput() == QUIT_APPLICATION) {
             break;
         }
-        _messageBus_->Notify("/Engine/Updated");
+        _messageBus_->Notify("/Engine/Tick");
         render();
 
         mainLoopEnd = SDL_GetTicks();
