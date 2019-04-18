@@ -1,16 +1,16 @@
 #include <iostream>
 #include <filesystem>
 
-#include "MessageBus.h"
-#include "Engine.h"
-#include "Resources/Resources.h"
+#include "Engine/Engine.h"
+#include "Engine/MessageBus.h"
+#include "Game/Game.h"
 
 
 namespace Match3 {
 
 // Globals //
 MessageBus* _messageBus_ = nullptr;
-Resources* _resources_ = nullptr;
+Engine* _engine_ = nullptr;
 
 } // namespace Match3
 
@@ -47,11 +47,9 @@ int main(int argc, char* argv[]) {
         Match3::_messageBus_ = &messageBus;
 
         Match3::Engine engine(currentDirectory);
-        Match3::_resources_ = engine.GetResources();
+        Match3::_engine_ = &engine;
 
-        // TEST //
-        Match3::_resources_->GetAtlasHandler()->Load("Backdrop13.jpg");
-        // /TEST //
+        Match3::Game game;
 
         engine.Run();
 

@@ -22,14 +22,12 @@ using json = nlohmann::json;
 namespace Match3 {
 
 extern MessageBus* _messageBus_;
-extern Resources* _resources_;
 
 Engine::Engine(const std::filesystem::path& currentDirectory) : currentDirectory_(currentDirectory) {
     {
         std::ifstream engineConfigStream(currentDirectory_ / "config" / "engine.json");
         engineConfigStream >> engineConfig_;
     }
-
 
     // Initialize SDL //
 
@@ -79,17 +77,10 @@ Engine::Engine(const std::filesystem::path& currentDirectory) : currentDirectory
 
     // Create resources handler //
 
-    resources_ = new Resources{ currentDirectory, renderer_ };
-
-
-    // Notify on the message bus //
-
-    _messageBus_->Notify("/Engine/Started");
+    resources_ = std::make_shared<Resources>(currentDirectory, renderer_);
 }
 
 Engine::~Engine() {
-    delete resources_;
-
     SDL_DestroyRenderer(renderer_);
     SDL_DestroyWindow(window_);
     IMG_Quit();
@@ -102,6 +93,8 @@ void Engine::Run() {
     unsigned int mainLoopEnd = 0;
     const unsigned int msPerFrame = engineConfig_["msPerFrame"];
 
+    _messageBus_->Notify("/Engine/Started");
+
     while (true) {
         mainLoopStart = SDL_GetTicks();
         nextFrame = mainLoopStart + msPerFrame;
@@ -109,7 +102,7 @@ void Engine::Run() {
         if (processInput() == QUIT_APPLICATION) {
             break;
         }
-        update();
+        _messageBus_->Notify("/Engine/Updated");
         render();
 
         mainLoopEnd = SDL_GetTicks();
@@ -119,6 +112,7 @@ void Engine::Run() {
     }
 
     finishState_ = WindowClosed;
+    _messageBus_->Notify("/Engine/Stopped");
 }
 
 bool Engine::processInput() {
@@ -133,18 +127,13 @@ bool Engine::processInput() {
     return KEEP_RUNNING;
 }
 
-void Engine::update() {
-}
-
 void Engine::render() {
     SDL_RenderClear(renderer_);
-    // TEST //
-    auto atlas = _resources_->GetAtlasHandler()->Get("Backdrop13.jpg");
-    auto rects = atlas->rects_;
-    SDL_Rect srcRect = rects["background"];
-    SDL_Rect dstRect(srcRect);
-    SDL_RenderCopy(renderer_, atlas->texture_, &srcRect, &dstRect);
-    // /TEST //
+
+    for each (auto renderable in renderables_) {
+        renderable->Render(renderer_);
+    }
+
     SDL_RenderPresent(renderer_);
 }
 

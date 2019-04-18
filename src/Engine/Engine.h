@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "Renderable.h"
 #include "Resources/Resources.h"
 
 
@@ -27,11 +28,12 @@ public:
     void Run();
     FinishState GetFinishState() { return finishState_; }
 
-    Resources* GetResources() { return resources_; }
+    std::shared_ptr<Resources> GetResources() { return resources_; }
+
+    void InsertRenderable(std::shared_ptr<Renderable> renderable) { renderables_.push_back(renderable); }
 
 private:
     bool processInput();
-    void update();
     void render();
 
     std::filesystem::path currentDirectory_;
@@ -39,7 +41,9 @@ private:
 
     SDL_Window* window_ = nullptr;
     SDL_Renderer* renderer_ = nullptr;
-    Resources* resources_ = nullptr;
+    std::shared_ptr<Resources> resources_;
+
+    std::list<std::shared_ptr<Renderable>> renderables_{};
 
     FinishState finishState_ = Nothing;
 };

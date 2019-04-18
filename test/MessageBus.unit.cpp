@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "MessageBus.h"
+#include "Engine/MessageBus.h"
 
 
 SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
@@ -9,7 +9,7 @@ SCENARIO("listeners can be attached, triggered and detached", "[MessageBus]") {
         int listenerTriggerCount = 0;
 
         Match3::MessageBus::CallbackPtr cb = std::make_shared<Match3::MessageBus::Callback>(
-            [&listenerTriggerCount](Match3::MessageBus::Key, Match3::MessageBus::Data) {
+            [&listenerTriggerCount](const Match3::MessageBus::Key&, Match3::MessageBus::Data) {
                 ++listenerTriggerCount;
             }
         );
