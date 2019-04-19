@@ -45,11 +45,15 @@ find_library(SDL2_LIBRARY
     HINTS "${EXTERNAL_DYNAMIC}/SDL2"
     PATH_SUFFIXES "${LIB_PATH_SUFFIX}"
 )
-find_library(SDL2_MAIN_LIBRARY
-    NAMES "SDL2main"
-    HINTS "${EXTERNAL_DYNAMIC}/SDL2"
-    PATH_SUFFIXES "${LIB_PATH_SUFFIX}"
-)
+
+IF(WIN32)
+    find_library(SDL2_MAIN_LIBRARY
+        NAMES "SDL2main"
+        HINTS "${EXTERNAL_DYNAMIC}/SDL2"
+        PATH_SUFFIXES "${LIB_PATH_SUFFIX}"
+    )
+ENDIF()
+
 set(SDL2_BINARIES "SDL2")
 
 find_library(SDL2_IMAGE_LIBRARY
@@ -76,9 +80,11 @@ set(EXECUTABLE_INCLUDE_DIRECTORIES
 set(EXECUTABLE_LINK_LIBRARIES
     "nlohmann_json::nlohmann_json" # provided by NLOHMANN_JSON_SUBPROJECT
     "${SDL2_LIBRARY}"
-    "${SDL2_MAIN_LIBRARY}"
     "${SDL2_IMAGE_LIBRARY}"
 )
+IF(WIN32)
+    set(EXECUTABLE_LINK_LIBRARIES "${SDL2_MAIN_LIBRARY}" ${EXECUTABLE_LINK_LIBRARIES})
+ENDIF()
 
 # Main executable
 add_executable("${MAIN_EXECUTABLE_NAME}")
@@ -108,27 +114,29 @@ target_link_libraries("${UNIT_TESTS_NAME}"
 
 # TODO: remove this ugly code too
 #   should be simple with the Find*.cmake etc... modules
-set(DYNAMIC_LIBRARY_EXTENSIONS "dll" "dylib" "so")
+IF(WIN32)
+    set(DYNAMIC_LIBRARY_EXTENSIONS "dll" "dylib" "so")
 
-FOREACH(EXECUTABLE_NAME IN LISTS EXECUTABLES)
-    FOREACH(EXTENSION IN LISTS DYNAMIC_LIBRARY_EXTENSIONS)
-        FOREACH(SDL2_LIBRARY IN LISTS SDL2_LIBRARIES)
-            FOREACH(BINARY IN LISTS "${SDL2_LIBRARY}_BINARIES")
-                set(LIB_BINARY_FULL_PATH "${CMAKE_SOURCE_DIR}/${EXTERNAL_DYNAMIC}/${SDL2_LIBRARY}/${LIB_PATH_SUFFIX}/${BINARY}.${EXTENSION}")
+    FOREACH(EXECUTABLE_NAME IN LISTS EXECUTABLES)
+        FOREACH(EXTENSION IN LISTS DYNAMIC_LIBRARY_EXTENSIONS)
+            FOREACH(SDL2_LIBRARY IN LISTS SDL2_LIBRARIES)
+                FOREACH(BINARY IN LISTS "${SDL2_LIBRARY}_BINARIES")
+                    set(LIB_BINARY_FULL_PATH "${CMAKE_SOURCE_DIR}/${EXTERNAL_DYNAMIC}/${SDL2_LIBRARY}/${LIB_PATH_SUFFIX}/${BINARY}.${EXTENSION}")
 
-                IF(EXISTS "${LIB_BINARY_FULL_PATH}")
-                    add_custom_command(
-                        TARGET "${EXECUTABLE_NAME}"
-                        POST_BUILD
-                        COMMAND "${CMAKE_COMMAND}" "-E" "copy"
-                                "${LIB_BINARY_FULL_PATH}"
-                                "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>"
-                    )
-                ENDIF()
+                    IF(EXISTS "${LIB_BINARY_FULL_PATH}")
+                        add_custom_command(
+                            TARGET "${EXECUTABLE_NAME}"
+                            POST_BUILD
+                            COMMAND "${CMAKE_COMMAND}" "-E" "copy"
+                                    "${LIB_BINARY_FULL_PATH}"
+                                    "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>"
+                        )
+                    ENDIF()
+                ENDFOREACH()
             ENDFOREACH()
         ENDFOREACH()
     ENDFOREACH()
-ENDFOREACH()
+ENDIF()
 # end TODO
 
 file(GLOB_RECURSE MAIN_EXECUTABLE_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
