@@ -32,6 +32,7 @@ public:
     const std::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
     std::shared_ptr<Resources> GetResources() { return resources_; }
     std::mt19937& GetRandomGenerator() { return randomGenerator_; }
+    const json& GetEngineConfiguration() const { return engineConfig_; }
     const json& GetWindowConfiguration() const { return engineConfig_["window"]; }
 
     void InsertRenderable(std::shared_ptr<Renderable> renderable) { renderables_.push_back(renderable); }
