@@ -50,11 +50,7 @@ public:
                         break;
                     }
                     for (size_t pi = 0; pi < pattern.GetRows(); ++pi) {
-                        if (
-                            (*this)[i + pi][j + pj]
-                            !=
-                            pattern[pi][pj]
-                        ) {
+                        if ((*this)[i + pi][j + pj] != pattern[pi][pj]) {
                             patternDetected = false;
                             break;
                         }
@@ -68,7 +64,7 @@ public:
             }
         }
 
-        return std::move(patternInstances);
+        return patternInstances;
     }
 };
 

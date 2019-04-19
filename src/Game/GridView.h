@@ -1,8 +1,8 @@
 #pragma once
 
+#include <forward_list>
 #include <functional>
 #include <optional>
-#include <queue>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -30,7 +30,11 @@ private:
     void enactActionLogDelta(MessageBus::Data gridDelta);
 
     void fillTile(size_t j, size_t i, size_t value);
+    void emptyTile(size_t j, size_t i);
     void swapTiles(size_t j, size_t i, size_t oj, size_t oi);
+    void returnTiles(size_t j, size_t i, size_t oj, size_t oi);
+    void mergeTiles(std::vector<std::array<size_t, 2>> mergedGroup);
+    void dropTiles(std::vector<std::array<size_t, 2>> tilesFallen, std::vector<std::array<size_t, 2>> tileGrounds);
 
     void pickUpTileByPosition(int x, int y);
     void dragHeldTile(int x, int y, int initialX, int initialY);
@@ -67,7 +71,7 @@ private:
             }
         }
     };
-    std::priority_queue<std::shared_ptr<Cell>, std::vector<std::shared_ptr<Cell>>, ImagePoolCompare> tilePool_;
+    std::forward_list<std::shared_ptr<Cell>> tilePool_;
 
     Util::Array2D<std::shared_ptr<Cell>> tileImageByCoordinates_;
 

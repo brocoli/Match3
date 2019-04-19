@@ -46,6 +46,7 @@ void Game::createGridView() {
 
 void Game::createGridLogic() {
     gridLogic_ = std::make_shared<GridLogic>();
+    gridLogic_->InitialFillGrid();
 }
 
 } // namespace Match3

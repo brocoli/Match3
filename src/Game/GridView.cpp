@@ -64,7 +64,7 @@ GridView::GridView() :
             false
         );
         _engine_->InsertRenderable(img);
-        tilePool_.emplace(img);
+        tilePool_.push_front(img);
     }
 
     tileImageByCoordinates_ = Util::Array2D<std::shared_ptr<Cell>>(cellsX_, cellsY_, nullptr);
@@ -141,24 +141,39 @@ std::optional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
 void GridView::enactActionLogDelta(MessageBus::Data actionLogDelta) {
     for each (json delta in (*actionLogDelta)) {
         if (delta["action"] == "fill") {
-            for each (json tile in delta["tiles"]) {
-                fillTile(tile["x"], tile["y"], tile["value"]);
+            for (size_t i = 0; i < delta["tilesCoordinates"].size(); ++i) {
+                auto tile = delta["tilesCoordinates"][i];
+                fillTile(tile[0], tile[1], delta["tilesColors"][i]);
             }
         } else if (delta["action"] == "tileSwap") {
             swapTiles(delta["tiles"][0][0], delta["tiles"][0][1], delta["tiles"][1][0], delta["tiles"][1][1]);
+        } else if (delta["action"] == "failedSwapAttempt") {
+            returnTiles(delta["tiles"][0][0], delta["tiles"][0][1], delta["tiles"][1][0], delta["tiles"][1][1]);
+        } else if (delta["action"] == "merge") {
+            for each (auto group in delta["groups"]) {
+                mergeTiles(group);
+            }
+        } else if (delta["action"] == "gravity") {
+            dropTiles(delta["tilesFallen"], delta["tileGrounds"]);
         }
     }
 }
 
 void GridView::fillTile(size_t j, size_t i, size_t tileType) {
-    std::shared_ptr<Cell> tile = tilePool_.top();
-    tilePool_.pop();
+    std::shared_ptr<Cell> tile = tilePool_.front();
+    tilePool_.pop_front();
 
     tile->SetImage(tileImageNames_[tileType]);
     tile->SetXY(calculateXYFromCoordinates(j, i));
     tile->SetVisible(true);
 
     tileImageByCoordinates_[i][j] = tile;
+}
+
+void GridView::emptyTile(size_t j, size_t i) {
+    std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+    tile->SetVisible(false);
+    tilePool_.push_front(tile);
 }
 
 void GridView::swapTiles(size_t j, size_t i, size_t oj, size_t oi) {
@@ -170,6 +185,29 @@ void GridView::swapTiles(size_t j, size_t i, size_t oj, size_t oi) {
 
     tile->SetXY(calculateXYFromCoordinates(oj, oi));
     otherTile->SetXY(calculateXYFromCoordinates(j, i));
+}
+
+void GridView::returnTiles(size_t j, size_t i, size_t oj, size_t oi) {
+    std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+    std::shared_ptr<Cell> otherTile = tileImageByCoordinates_[oi][oj];
+
+    tile->SetXY(calculateXYFromCoordinates(j, i));
+    otherTile->SetXY(calculateXYFromCoordinates(oj, oi));
+}
+
+void GridView::mergeTiles(std::vector<std::array<size_t, 2>> mergedGroup) {
+    for each (auto coordinates in mergedGroup) {
+        emptyTile(coordinates[0], coordinates[1]);
+    }
+}
+
+void GridView::dropTiles(std::vector<std::array<size_t, 2>> tilesFallen, std::vector<std::array<size_t, 2>> tileGrounds) {
+    // Note that these lists are assumed to be ordered in a way that avoids collisions
+    for (size_t i = 0; i < tilesFallen.size(); ++i) {
+        std::array<size_t, 2> tileFallen = tilesFallen[i];
+        std::array<size_t, 2> tileGround = tileGrounds[i];
+        swapTiles(tileFallen[0], tileFallen[1], tileGround[0], tileGround[1]);
+    }
 }
 
 void GridView::pickUpTileByPosition(int x, int y) {

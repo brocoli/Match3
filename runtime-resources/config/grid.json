@@ -17,5 +17,23 @@
   "inputSensitivity": {
     "position": 46,
     "velocityFactor": 2
-  }
+  },
+  "colorPatterns": [
+    {
+      "cols": 3,
+      "rows": 1,
+      "pattern": [
+        [true, true, true]
+      ]
+    },
+    {
+      "cols": 1,
+      "rows": 3,
+      "pattern": [
+        [true],
+        [true],
+        [true]
+      ]
+    }
+  ]
 }
