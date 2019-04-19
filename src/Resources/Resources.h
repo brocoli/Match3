@@ -10,7 +10,7 @@ namespace Match3 {
 
 class Resources {
 public:
-    Resources(const std::filesystem::path& currentDirectory, SDL_Renderer* renderer) {
+    Resources(const std::experimental::filesystem::path& currentDirectory, SDL_Renderer* renderer) {
         atlasHandler_ = std::make_shared<AtlasHandler>(AtlasHandler(currentDirectory, renderer));
     }
 

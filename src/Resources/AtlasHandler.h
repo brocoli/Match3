@@ -1,6 +1,6 @@
 #pragma once
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <unordered_map>
 
 #include <SDL.h>
@@ -16,7 +16,7 @@ namespace Match3 {
 
 class AtlasHandler {
 public:
-    AtlasHandler(const std::filesystem::path& currentDirectory, SDL_Renderer* renderer) :
+    AtlasHandler(const std::experimental::filesystem::path& currentDirectory, SDL_Renderer* renderer) :
         currentDirectory_(currentDirectory),
         renderer_(renderer)
     {}
@@ -27,7 +27,7 @@ public:
     }
 
 private:
-    std::filesystem::path currentDirectory_;
+    std::experimental::filesystem::path currentDirectory_;
     std::unordered_map<std::string, std::shared_ptr<Atlas>> atlas_;
 
     SDL_Renderer* renderer_;

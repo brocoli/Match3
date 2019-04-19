@@ -1,6 +1,6 @@
 #pragma once
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <random>
 
 #include <SDL.h>
@@ -23,13 +23,13 @@ public:
         WindowClosed,
     };
 
-    Engine(const std::filesystem::path& currentDirectory, unsigned int randomSeed);
+    Engine(const std::experimental::filesystem::path& currentDirectory, unsigned int randomSeed);
     ~Engine();
 
     void Run();
 
     FinishState GetFinishState() { return finishState_; }
-    const std::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
+    const std::experimental::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
     std::shared_ptr<Resources> GetResources() { return resources_; }
     std::mt19937& GetRandomGenerator() { return randomGenerator_; }
     const json& GetEngineConfiguration() const { return engineConfig_; }
@@ -42,7 +42,7 @@ private:
     bool processInput();
     void render();
 
-    std::filesystem::path currentDirectory_;
+    std::experimental::filesystem::path currentDirectory_;
     std::mt19937 randomGenerator_;
     json engineConfig_;
 
