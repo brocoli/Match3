@@ -67,7 +67,7 @@ GridView::GridView() :
         tilePool_.emplace(img);
     }
 
-    tileImageByCoordinates_ = Util::Array2D<std::shared_ptr<Cell>>(cellsY_, cellsX_, nullptr);
+    tileImageByCoordinates_ = Util::Array2D<std::shared_ptr<Cell>>(cellsX_, cellsY_, nullptr);
 
 
     onGridModelChanged_ = std::make_shared<MessageBus::Callback>(

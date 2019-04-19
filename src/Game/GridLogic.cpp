@@ -24,7 +24,7 @@ GridLogic::GridLogic() : grid_(0, 0, 0) {
     json cellNames = configuration["cellNames"];
     cellTypes_ = cellNames.size();
 
-    grid_ = Util::Array2D<int> (cellsY_, cellsX_, EMPTY);
+    grid_ = Util::Array2D<int> (cellsX_, cellsY_, EMPTY);
 
 
     onGridInputSwap_ = std::make_shared<MessageBus::Callback>(
