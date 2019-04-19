@@ -37,7 +37,7 @@ private:
 
     //TODO: remove this
     CallbackPtr printer_ = std::make_shared<Callback>([](Key key, Data data) -> void {
-        if (key != "/Engine/Tick") {
+        if (key != "/Engine/Tick" && key != "/Engine/Input/Mouse/Left/Moved") {
             std::cout << "[MessageBus] " << key << ": " << data->dump() << std::endl;
         }
     });

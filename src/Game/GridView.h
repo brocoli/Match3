@@ -4,6 +4,7 @@
 #include <forward_list>
 #include <functional>
 #include <optional>
+#include <set>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -11,6 +12,7 @@ using json = nlohmann::json;
 #include "Util/Array2D.h"
 #include "Engine/AtlasImage.h"
 #include "Engine/MessageBus.h"
+#include "Engine/TweenRunner.h"
 
 
 namespace Match3 {
@@ -35,7 +37,7 @@ private:
     void emptyTile(size_t j, size_t i);
     void swapTiles(size_t j, size_t i, size_t oj, size_t oi);
     void returnTiles(size_t j, size_t i, size_t oj, size_t oi);
-    void mergeTiles(std::vector<std::array<size_t, 2>> mergedGroup);
+    void mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups);
     void dropTiles(std::vector<std::array<size_t, 2>> tilesFallen, std::vector<std::array<size_t, 2>> tileGrounds);
 
     void pickUpTileByPosition(int x, int y);
@@ -79,8 +81,15 @@ private:
     int inputSensitivityPosition_;
     int inputSensitivityVelocityFactor_;
 
+    int tileMovementVelocity_;
+
     bool busy_;
     std::deque<json> pendingActionLogDeltas_;
+
+    TweenRunner<int> tweenRunner_;
+
+    int tweenCountTemp_;
+    std::list<std::list<std::array<size_t, 2>>> groupsToMergeTempCopy_;
 };
 
 } // namespace Match3

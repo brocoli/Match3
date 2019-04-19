@@ -24,7 +24,7 @@ GridView::GridView() :
     heldTile_(nullptr), heldTileOriginalCoordinates_{ 0, 0 }, heldTileOriginalPosition_{ 0, 0 },
     interactedTile_(nullptr), interactedTileOriginalCoordinates_{ 0, 0 }, interactedTileOriginalPosition_{ 0, 0 },
     currentDragDelta_{ 0, 0 }, dragMovementVelocity_{ 0, 0 },
-    inputSensitivityPosition_(0), inputSensitivityVelocityFactor_(0),
+    inputSensitivityPosition_(0), inputSensitivityVelocityFactor_(0), tileMovementVelocity_(0),
     busy_(false)
 {
     json configuration;
@@ -51,6 +51,9 @@ GridView::GridView() :
     const json& inputSensitivity = configuration["inputSensitivity"];
     inputSensitivityPosition_ = inputSensitivity["position"];
     inputSensitivityVelocityFactor_ = inputSensitivity["velocityFactor"];
+
+
+    tileMovementVelocity_ = configuration["tileMovementVelocity"];
 
 
     const json& window = _engine_->GetWindowConfiguration();
@@ -164,9 +167,7 @@ void GridView::enactActionLogDelta() {
         } else if (delta["action"] == "failedSwapAttempt") {
             returnTiles(delta["tiles"][0][0], delta["tiles"][0][1], delta["tiles"][1][0], delta["tiles"][1][1]);
         } else if (delta["action"] == "merge") {
-            for each (auto group in delta["groups"]) {
-                mergeTiles(group);
-            }
+            mergeTiles(delta["groups"]);
         } else if (delta["action"] == "gravity") {
             dropTiles(delta["tilesFallen"], delta["tileGrounds"]);
         }
@@ -177,15 +178,35 @@ void GridView::fillTile(size_t j, size_t i, size_t tileType) {
     std::shared_ptr<Cell> tile = tilePool_.front();
     tilePool_.pop_front();
 
+    int height = _engine_->GetWindowConfiguration()["height"]/2;
+
     tile->SetImage(tileImageNames_[tileType]);
-    tile->SetXY(calculateXYFromCoordinates(j, i));
+    Int2D xy = calculateXYFromCoordinates(j, i);
+    int endY = xy.second;
+    xy.second -= height;
+    int startY = xy.second;
+    tile->SetXY(xy);
     tile->SetVisible(true);
 
     tileImageByCoordinates_[i][j] = tile;
+
+    busy_ = true;
+    tweenRunner_.StartTween(
+        1000 * height / tileMovementVelocity_, startY,
+        Easing::InQuad(startY, endY - startY),
+        [tile](const int& data) { tile->SetY(data); },
+        [this]() {
+            if (tweenRunner_.GetLivingTweenCount() <= 1) {
+                busy_ = false;
+                enactActionLogDelta();
+            }
+        }
+    );
 }
 
 void GridView::emptyTile(size_t j, size_t i) {
     std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+    tileImageByCoordinates_[i][j] = nullptr;
     tile->SetVisible(false);
     tilePool_.push_front(tile);
 }
@@ -209,18 +230,134 @@ void GridView::returnTiles(size_t j, size_t i, size_t oj, size_t oi) {
     otherTile->SetXY(calculateXYFromCoordinates(oj, oi));
 }
 
-void GridView::mergeTiles(std::vector<std::array<size_t, 2>> mergedGroup) {
-    for each (auto coordinates in mergedGroup) {
-        emptyTile(coordinates[0], coordinates[1]);
+void GridView::mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups) {
+    groupsToMergeTempCopy_ = std::list<std::list<std::array<size_t, 2>>>(groups);
+    tweenCountTemp_ = 0;
+
+    for each (auto mergedGroup in groups) {
+        size_t minJ = std::numeric_limits<size_t>::max(), maxJ = std::numeric_limits<size_t>::min();
+        size_t minI = std::numeric_limits<size_t>::max(), maxI = std::numeric_limits<size_t>::min();
+
+        for each (auto coordinates in mergedGroup) {
+            minJ = std::min(minJ, coordinates[0]);
+            maxJ = std::max(maxJ, coordinates[0]);
+            minI = std::min(minI, coordinates[1]);
+            maxI = std::max(maxI, coordinates[1]);
+        }
+
+        size_t halfJ = (minJ + maxJ) / 2, halfI = (minI + maxI) / 2;
+
+        for each (auto coordinates in mergedGroup) {
+            size_t j = coordinates[0], i = coordinates[1];
+
+            std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+
+            Int2D startXY = tile->GetXY();
+            Int2D endXY = calculateXYFromCoordinates(halfJ, halfI);
+
+            int startX = startXY.first, startY = startXY.second;
+            int endX = endXY.first, endY = endXY.second;
+            int deltaX = endX - startX;
+            int deltaY = endY - startY;
+
+            busy_ = true;
+            if (deltaX != 0) {
+                ++tweenCountTemp_;
+                tweenRunner_.StartTween(
+                    1000 * std::abs(deltaX) / tileMovementVelocity_, startX,
+                    Easing::InQuad(startX, deltaX),
+                    [tile](const int& data) { tile->SetX(data); },
+                    [this]() {
+                        --tweenCountTemp_;
+                        if (tweenCountTemp_ <= 0) {
+                            for each (auto mergedGroup in groupsToMergeTempCopy_) {
+                                for each (auto coords in mergedGroup) {
+                                    emptyTile(coords[0], coords[1]);
+                                }
+                            }
+                            if (tweenRunner_.GetLivingTweenCount() <= 1) {
+                                busy_ = false;
+                                enactActionLogDelta();
+                            }
+                        }
+                    }
+                );
+            }
+            if (deltaY != 0) {
+                ++tweenCountTemp_;
+                tweenRunner_.StartTween(
+                    1000 * std::abs(deltaY) / tileMovementVelocity_, startY,
+                    Easing::InQuad(startY, deltaY),
+                    [tile](const int& data) { tile->SetY(data); },
+                    [this]() {
+                        --tweenCountTemp_;
+                        if (tweenCountTemp_ <= 0) {
+                            for each (auto mergedGroup in groupsToMergeTempCopy_) {
+                                for each (auto coords in mergedGroup) {
+                                    emptyTile(coords[0], coords[1]);
+                                }
+                            }
+                            if (tweenRunner_.GetLivingTweenCount() <= 1) {
+                                busy_ = false;
+                                enactActionLogDelta();
+                            }
+                        }
+                    }
+                );
+            }
+        }
     }
 }
 
 void GridView::dropTiles(std::vector<std::array<size_t, 2>> tilesFallen, std::vector<std::array<size_t, 2>> tileGrounds) {
     // Note that these lists are assumed to be ordered in a way that avoids collisions
-    for (size_t i = 0; i < tilesFallen.size(); ++i) {
-        std::array<size_t, 2> tileFallen = tilesFallen[i];
-        std::array<size_t, 2> tileGround = tileGrounds[i];
-        swapTiles(tileFallen[0], tileFallen[1], tileGround[0], tileGround[1]);
+    for (size_t k = 0; k < tilesFallen.size(); ++k) {
+        std::array<size_t, 2> tileFallen = tilesFallen[k];
+        std::array<size_t, 2> tileGround = tileGrounds[k];
+
+        size_t j = tileFallen[0], i = tileFallen[1], oj = tileGround[0], oi = tileGround[1];
+
+        std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
+        std::shared_ptr<Cell> otherTile = tileImageByCoordinates_[oi][oj];
+
+        tileImageByCoordinates_[i][j] = nullptr;
+        tileImageByCoordinates_[oi][oj] = tile;
+
+        Int2D startXY = tile->GetXY();
+        Int2D endXY = calculateXYFromCoordinates(oj, oi);
+
+        int startX = startXY.first, startY = startXY.second;
+        int endX = endXY.first, endY = endXY.second;
+        int deltaX = endX - startX;
+        int deltaY = endY - startY;
+
+        busy_ = true;
+        if (deltaX != 0) {
+            tweenRunner_.StartTween(
+                1000 * std::abs(deltaX) / tileMovementVelocity_, startX,
+                Easing::InQuad(startX, deltaX),
+                [tile](const int& data) { tile->SetX(data); },
+                [this]() {
+                    if (tweenRunner_.GetLivingTweenCount() <= 1) {
+                        busy_ = false;
+                        enactActionLogDelta();
+                    }
+                }
+            );
+        }
+        if (deltaY != 0) {
+            tweenRunner_.StartTween(
+                1000 * std::abs(deltaY) / tileMovementVelocity_, startY,
+                Easing::InQuad(startY, deltaY),
+                [tile](const int& data) { tile->SetY(data); },
+                [this]() {
+                    if (tweenRunner_.GetLivingTweenCount() <= 1) {
+                        busy_ = false;
+                        enactActionLogDelta();
+                    }
+                }
+            );
+        }
     }
 }
 

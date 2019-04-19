@@ -35,5 +35,6 @@
         [true]
       ]
     }
-  ]
+  ],
+  "tileMovementVelocity": 1000
 }

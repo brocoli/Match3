@@ -107,6 +107,12 @@ void GridLogic::trySwapTiles(int j, int i, int dj, int di) {
 
     std::list<json> actionLogDelta = solveGridUntilStable();
 
+    if (actionLogDelta.empty()) {
+        temp = grid_[i][j];
+        grid_[i][j] = grid_[i + di][j + dj];
+        grid_[i + di][j + dj] = temp;
+    }
+
     actionLogDelta.emplace_front(json({
         {"action", actionLogDelta.empty() ? "failedSwapAttempt" : "tileSwap"},
         {"tiles", json::array({
