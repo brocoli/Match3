@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <forward_list>
 #include <functional>
 #include <optional>
@@ -27,7 +28,8 @@ private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
     std::optional<Size2D> calculateCoordinatesFromXY(int x, int y);
 
-    void enactActionLogDelta(MessageBus::Data gridDelta);
+    void enqueueActionLogDelta(MessageBus::Data actionLogDelta);
+    void enactActionLogDelta();
 
     void fillTile(size_t j, size_t i, size_t value);
     void emptyTile(size_t j, size_t i);
@@ -40,7 +42,7 @@ private:
     void dragHeldTile(int x, int y, int initialX, int initialY);
     void releaseHeldTile(int x, int y, int initialX, int initialY);
 
-    MessageBus::CallbackPtr onGridModelChanged_;
+    MessageBus::CallbackPtr onGridActionLogChanged_;
 
     MessageBus::CallbackPtr onMouseLeftStarted_;
     MessageBus::CallbackPtr onMouseLeftStopped_;
@@ -59,18 +61,6 @@ private:
 
     json tileImageNames_;
 
-    class ImagePoolCompare {
-    public:
-        bool operator() (const std::shared_ptr<const Cell> lhs, const std::shared_ptr<const Cell> rhs) {
-            bool isLhsVisible = lhs->IsVisible();
-
-            if (isLhsVisible == rhs->IsVisible()) {
-                return lhs < rhs;
-            } else {
-                return isLhsVisible;
-            }
-        }
-    };
     std::forward_list<std::shared_ptr<Cell>> tilePool_;
 
     Util::Array2D<std::shared_ptr<Cell>> tileImageByCoordinates_;
@@ -88,6 +78,9 @@ private:
 
     int inputSensitivityPosition_;
     int inputSensitivityVelocityFactor_;
+
+    bool busy_;
+    std::deque<json> pendingActionLogDeltas_;
 };
 
 } // namespace Match3

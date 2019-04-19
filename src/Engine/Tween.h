@@ -19,7 +19,7 @@ public:
         const T& startData,
         std::function<T(const T& data, int currentTime, int duration)> updater,
         std::function<void(const T& data)> effector,
-        std::function<void(void)> onComplete,
+        std::function<void(void)> onComplete
     ) :
         updater_(updater), effector_(effector), onComplete_(onComplete),
         data_(updater(startData, 0, duration)),

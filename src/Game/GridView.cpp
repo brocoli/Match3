@@ -11,6 +11,7 @@ using json = nlohmann::json;
 #include "Engine/AtlasImage.h"
 #include "Engine/Engine.h"
 #include "Engine/MessageBus.h"
+#include "Engine/Tween.h"
 
 
 namespace Match3 {
@@ -23,7 +24,8 @@ GridView::GridView() :
     heldTile_(nullptr), heldTileOriginalCoordinates_{ 0, 0 }, heldTileOriginalPosition_{ 0, 0 },
     interactedTile_(nullptr), interactedTileOriginalCoordinates_{ 0, 0 }, interactedTileOriginalPosition_{ 0, 0 },
     currentDragDelta_{ 0, 0 }, dragMovementVelocity_{ 0, 0 },
-    inputSensitivityPosition_(0), inputSensitivityVelocityFactor_(0)
+    inputSensitivityPosition_(0), inputSensitivityVelocityFactor_(0),
+    busy_(false)
 {
     json configuration;
     {
@@ -70,17 +72,19 @@ GridView::GridView() :
     tileImageByCoordinates_ = Util::Array2D<std::shared_ptr<Cell>>(cellsX_, cellsY_, nullptr);
 
 
-    onGridModelChanged_ = std::make_shared<MessageBus::Callback>(
+    onGridActionLogChanged_ = std::make_shared<MessageBus::Callback>(
         [this](const MessageBus::Key&, MessageBus::Data actionLogDelta) -> void {
-            enactActionLogDelta(actionLogDelta);
+            enqueueActionLogDelta(actionLogDelta);
         }
     );
-    _messageBus_->Attach("/Game/Grid/Logic/ActionLog/Changed", onGridModelChanged_);
+    _messageBus_->Attach("/Game/Grid/Logic/ActionLog/Changed", onGridActionLogChanged_);
 
 
     onMouseLeftStarted_ = std::make_shared<MessageBus::Callback>(
         [this](const MessageBus::Key&, MessageBus::Data mouseEvent) -> void {
-            pickUpTileByPosition((*mouseEvent)["x"], (*mouseEvent)["y"]);
+            if (!busy_) {
+                pickUpTileByPosition((*mouseEvent)["x"], (*mouseEvent)["y"]);
+            }
         }
     );
     _messageBus_->Attach("/Engine/Input/Mouse/Left/Started", onMouseLeftStarted_);
@@ -101,11 +105,11 @@ GridView::GridView() :
 }
 
 GridView::~GridView() {
-    _messageBus_->Detach("/Game/Grid/Logic/ActionLog/Changed", onGridModelChanged_);
-
     _messageBus_->Detach("/Engine/Input/Mouse/Left/Stopped", onMouseLeftStopped_);
     _messageBus_->Detach("/Engine/Input/Mouse/Left/Moved", onMouseLeftMoved_);
     _messageBus_->Detach("/Engine/Input/Mouse/Left/Started", onMouseLeftStarted_);
+
+    _messageBus_->Detach("/Game/Grid/Logic/ActionLog/Changed", onGridActionLogChanged_);
 }
 
 Int2D GridView::calculateXYFromCoordinates(size_t j, size_t i) {
@@ -138,8 +142,18 @@ std::optional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
     return std::optional<Size2D>({(size_t)j, (size_t)i});
 }
 
-void GridView::enactActionLogDelta(MessageBus::Data actionLogDelta) {
-    for each (json delta in (*actionLogDelta)) {
+void GridView::enqueueActionLogDelta(MessageBus::Data actionLogDelta) {
+    for each (auto delta in (*actionLogDelta)) {
+        pendingActionLogDeltas_.emplace_front(delta);
+    }
+    enactActionLogDelta();
+}
+
+void GridView::enactActionLogDelta() {
+    while (!busy_ && !pendingActionLogDeltas_.empty()) {
+        auto delta = pendingActionLogDeltas_.back();
+        pendingActionLogDeltas_.pop_back();
+
         if (delta["action"] == "fill") {
             for (size_t i = 0; i < delta["tilesCoordinates"].size(); ++i) {
                 auto tile = delta["tilesCoordinates"][i];
