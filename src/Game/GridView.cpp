@@ -122,7 +122,7 @@ Int2D GridView::calculateXYFromCoordinates(size_t j, size_t i) {
     return Int2D(x, y);
 }
 
-std::optional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
+stdoptional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
     x -= layoutOffsetX_;
     y -= layoutOffsetY_;
 
@@ -142,7 +142,7 @@ std::optional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
         return std::nullopt;
     }
 
-    return std::optional<Size2D>({(size_t)j, (size_t)i});
+    return stdoptional<Size2D>({(size_t)j, (size_t)i});
 }
 
 void GridView::enqueueActionLogDelta(MessageBus::Data actionLogDelta) {
@@ -362,7 +362,7 @@ void GridView::dropTiles(std::vector<std::array<size_t, 2>> tilesFallen, std::ve
 }
 
 void GridView::pickUpTileByPosition(int x, int y) {
-    std::optional<Size2D> maybeCoords = calculateCoordinatesFromXY(x, y);
+    stdoptional<Size2D> maybeCoords = calculateCoordinatesFromXY(x, y);
 
     if (maybeCoords.has_value()) {
         Size2D coords = maybeCoords.value();

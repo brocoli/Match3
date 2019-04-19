@@ -1,6 +1,12 @@
 #pragma once
 
+#ifdef APPLE
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
 #include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 #include <random>
 
 #include <SDL.h>
@@ -23,13 +29,13 @@ public:
         WindowClosed,
     };
 
-    Engine(const std::experimental::filesystem::path& currentDirectory, unsigned int randomSeed);
+    Engine(const fs::path& currentDirectory, unsigned int randomSeed);
     ~Engine();
 
     void Run();
 
     FinishState GetFinishState() { return finishState_; }
-    const std::experimental::filesystem::path& GetCurrentDirectory() const { return currentDirectory_; }
+    const fs::path& GetCurrentDirectory() const { return currentDirectory_; }
     std::shared_ptr<Resources> GetResources() { return resources_; }
     std::mt19937& GetRandomGenerator() { return randomGenerator_; }
     const json& GetEngineConfiguration() const { return engineConfig_; }
@@ -42,7 +48,7 @@ private:
     bool processInput();
     void render();
 
-    std::experimental::filesystem::path currentDirectory_;
+    fs::path currentDirectory_;
     std::mt19937 randomGenerator_;
     json engineConfig_;
 

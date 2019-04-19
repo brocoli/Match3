@@ -1,6 +1,12 @@
 #pragma once
 
+#ifdef APPLE
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
 #include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 #include <unordered_map>
 
 #include <SDL.h>
@@ -16,7 +22,7 @@ namespace Match3 {
 
 class AtlasHandler {
 public:
-    AtlasHandler(const std::experimental::filesystem::path& currentDirectory, SDL_Renderer* renderer) :
+    AtlasHandler(const fs::path& currentDirectory, SDL_Renderer* renderer) :
         currentDirectory_(currentDirectory),
         renderer_(renderer)
     {}
@@ -27,7 +33,7 @@ public:
     }
 
 private:
-    std::experimental::filesystem::path currentDirectory_;
+    fs::path currentDirectory_;
     std::unordered_map<std::string, std::shared_ptr<Atlas>> atlas_;
 
     SDL_Renderer* renderer_;

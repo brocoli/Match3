@@ -1,5 +1,11 @@
 #include <iostream>
+#ifdef APPLE
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
 #include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 #include <random>
 
 #include "Engine/Engine.h"
@@ -24,19 +30,19 @@ extern "C"
 int main(int argc, char* argv[]) {
     // Set current directory path //
 
-    std::experimental::filesystem::path currentDirectory = std::experimental::filesystem::path();
+    fs::path currentDirectory = fs::path();
 
-    if (!std::experimental::filesystem::exists(currentDirectory / "config" / "engine.json")) {
-        // Try the path from std::experimental::filesystem::current_path() if relative paths are not working.
-        currentDirectory = std::experimental::filesystem::current_path();
+    if (!fs::exists(currentDirectory / "config" / "engine.json")) {
+        // Try the path from fs::current_path() if relative paths are not working.
+        currentDirectory = fs::current_path();
 
-        if (!std::experimental::filesystem::exists(currentDirectory / "config" / "engine.json")) {
-            // Try the path from argv[0] if std::experimental::filesystem::current_path() is being masked.
-            currentDirectory = std::experimental::filesystem::path(argv[0]).parent_path();
+        if (!fs::exists(currentDirectory / "config" / "engine.json")) {
+            // Try the path from argv[0] if fs::current_path() is being masked.
+            currentDirectory = fs::path(argv[0]).parent_path();
 
-            if (!std::experimental::filesystem::exists(currentDirectory / "config" / "engine.json")) {
+            if (!fs::exists(currentDirectory / "config" / "engine.json")) {
                 std::cout << "Failed to find config directory." << std::endl
-                    << "  std::experimental::filesystem::current_path() returns " << std::experimental::filesystem::current_path() << std::endl
+                    << "  fs::current_path() returns " << fs::current_path() << std::endl
                     << "  argv[0] is " << argv[0] << std::endl;
                 return EXIT_FAILURE;
             }

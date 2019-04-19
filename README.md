@@ -43,16 +43,25 @@ to the specific versions I used:
 * SDL2: `https://www.libsdl.org/release/SDL2-devel-2.0.9-VC.zip`
 * SDL2_image: `https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.4-win32-x64.zip`
 
-###### Mac OSX
+###### macOS
 
 Use Homebrew. `brew install sdl2 sdl2_image`
-
+NB: macOS build is not tested/supported yet.
 
 ###### Linux
 
 Install the dependencies from your package manager.
-
 NB: Linux build is not tested/supported yet.
+
+#### Boost (in macOS exclusively)
+
+Due to this program using some C++17 features and Apple
+not providing them, we substitute them with the Boost
+library's implementations of the same classes/functions
+
+Again, just use Homebrew and everything should be fine.
+`brew install boost`
+NB: macOS build is not tested/supported yet.
 
 ## Code Commentary
 

@@ -1,16 +1,22 @@
 #pragma once
 
-#include "AtlasHandler.h"
-
 #include <memory>
-#include <filesystem>
+#ifdef APPLE
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
+
+#include "AtlasHandler.h"
 
 
 namespace Match3 {
 
 class Resources {
 public:
-    Resources(const std::experimental::filesystem::path& currentDirectory, SDL_Renderer* renderer) {
+    Resources(const fs::path& currentDirectory, SDL_Renderer* renderer) {
         atlasHandler_ = std::make_shared<AtlasHandler>(AtlasHandler(currentDirectory, renderer));
     }
 

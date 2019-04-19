@@ -3,7 +3,13 @@
 #include <deque>
 #include <forward_list>
 #include <functional>
+#ifdef APPLE
+#include <boost/optional.hpp>
+#define stdoptional boost::optional
+#else
 #include <optional>
+#define stdoptional std::optional
+#endif
 #include <set>
 
 #include <nlohmann/json.hpp>
@@ -28,7 +34,7 @@ public:
     ~GridView();
 private:
     Int2D calculateXYFromCoordinates(size_t j, size_t i);
-    std::optional<Size2D> calculateCoordinatesFromXY(int x, int y);
+    stdoptional<Size2D> calculateCoordinatesFromXY(int x, int y);
 
     void enqueueActionLogDelta(MessageBus::Data actionLogDelta);
     void enactActionLogDelta();
