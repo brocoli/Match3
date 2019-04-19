@@ -59,21 +59,7 @@ find_library(SDL2_IMAGE_LIBRARY
 )
 set(SDL2_image_BINARIES "libjpeg-9" "libpng16-16" "libtiff-5" "libwebp-7" "SDL2_image" "zlib1")
 
-find_library(SDL2_TTF_LIBRARY
-    NAMES "SDL2_ttf"
-    HINTS "${EXTERNAL_DYNAMIC}/SDL2_ttf"
-    PATH_SUFFIXES "${LIB_PATH_SUFFIX}"
-)
-set(SDL2_ttf_BINARIES "libfreetype-6" "SDL2_ttf")
-
-find_library(SDL2_MIXER_LIBRARY
-    NAMES "SDL2_mixer"
-    HINTS "${EXTERNAL_DYNAMIC}/SDL2_mixer"
-    PATH_SUFFIXES "${LIB_PATH_SUFFIX}"
-)
-set(SDL2_mixer_BINARIES "libFLAC-8" "libmodplug-1" "libmpg123-0" "libogg-0" "libopus-0" "libopusfile-0" "libvorbis-0" "libvorbisfile-3" "SDL2_mixer")
-
-set(SDL2_LIBRARIES "SDL2" "SDL2_image" "SDL2_ttf" "SDL2_mixer")
+set(SDL2_LIBRARIES "SDL2" "SDL2_image")
 # end TODO
 
 
@@ -86,16 +72,12 @@ set(EXECUTABLE_INCLUDE_DIRECTORIES
     PRIVATE "${CMAKE_SOURCE_DIR}/src"
     PRIVATE "${EXTERNAL_DYNAMIC}/SDL2/include"
     PRIVATE "${EXTERNAL_DYNAMIC}/SDL2_image/include"
-    PRIVATE "${EXTERNAL_DYNAMIC}/SDL2_ttf/include"
-    PRIVATE "${EXTERNAL_DYNAMIC}/SDL2_mixer/include"
 )
 set(EXECUTABLE_LINK_LIBRARIES
     "nlohmann_json::nlohmann_json" # provided by NLOHMANN_JSON_SUBPROJECT
     "${SDL2_LIBRARY}"
     "${SDL2_MAIN_LIBRARY}"
     "${SDL2_IMAGE_LIBRARY}"
-    "${SDL2_TTF_LIBRARY}"
-    "${SDL2_MIXER_LIBRARY}"
 )
 
 # Main executable
