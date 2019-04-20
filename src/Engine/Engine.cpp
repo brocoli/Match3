@@ -21,7 +21,7 @@ namespace Match3 {
 
 extern MessageBus* _messageBus_;
 
-Engine::Engine(const std::experimental::filesystem::path& currentDirectory, unsigned int randomSeed) :
+Engine::Engine(const fs::path& currentDirectory, unsigned int randomSeed) :
     currentDirectory_(currentDirectory),
     randomGenerator_(std::mt19937(randomSeed)),
     mouseLeftButtonIsDown_(false),

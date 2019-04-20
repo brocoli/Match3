@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#ifdef APPLE
+#ifdef __APPLE__
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 #else

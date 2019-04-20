@@ -3,7 +3,7 @@
 #include <deque>
 #include <forward_list>
 #include <functional>
-#ifdef APPLE
+#ifdef __APPLE__
 #include <boost/optional.hpp>
 #define stdoptional boost::optional
 #else
