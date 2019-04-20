@@ -14,7 +14,7 @@ extern Engine* _engine_;
 GridLogic::GridLogic() : grid_(0, 0, 0) {
     json configuration;
     {
-        std::ifstream configurationStream(_engine_->GetCurrentDirectory() / "config" / "grid.json");
+        std::ifstream configurationStream((_engine_->GetCurrentDirectory() / "config" / "grid.json").generic_string());
         configurationStream >> configuration;
     }
 
@@ -28,8 +28,9 @@ GridLogic::GridLogic() : grid_(0, 0, 0) {
 
     grid_ = Util::Array2D<int>(cellsX_, cellsY_, EMPTY);
 
-
-    for each (auto pattern in configuration["colorPatterns"]) {
+    auto colorPatterns = configuration["colorPatterns"];
+    for (auto pt = colorPatterns.begin(); pt != colorPatterns.end(); ++pt) {
+        auto pattern = *pt;
         size_t cols = pattern["cols"];
         size_t rows = pattern["rows"];
         Util::Array2D<int> patternArray(cols, rows, 0);
@@ -142,7 +143,8 @@ bool GridLogic::solvePatternsInGrid(std::list<json>& actionLogDelta) {
     for (int color = 0; color < cellTypes_; ++color) {
         std::unordered_set<size_t> collectedTiles;
 
-        for each (auto pattern in patterns_) {
+        for (auto pt = patterns_.begin(); pt != patterns_.end(); ++pt) {
+            auto pattern = *pt;
             size_t cols = pattern.GetCols();
             size_t rows = pattern.GetRows();
 
@@ -184,7 +186,8 @@ bool GridLogic::solvePatternsInGrid(std::list<json>& actionLogDelta) {
         // Record the merger
         if (!collectedTiles.empty()) {
             std::list<std::array<size_t, 2>> merger;
-            for each (size_t coords in collectedTiles) {
+            for (auto ct = collectedTiles.begin(); ct != collectedTiles.end(); ++ct) {
+                size_t coords = *ct;
                 size_t j = coords / cellsY_;
                 size_t i = coords % cellsY_;
                 grid_[i][j] = EMPTY;

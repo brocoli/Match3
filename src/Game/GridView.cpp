@@ -29,7 +29,7 @@ GridView::GridView() :
 {
     json configuration;
     {
-        std::ifstream configurationStream(_engine_->GetCurrentDirectory() / "config" / "grid.json");
+        std::ifstream configurationStream((_engine_->GetCurrentDirectory() / "config" / "grid.json").generic_string());
         configurationStream >> configuration;
     }
 
@@ -58,8 +58,8 @@ GridView::GridView() :
 
     const json& window = _engine_->GetWindowConfiguration();
 
-    layoutOffsetX_ = (window["width"] - (layoutCellWidth_ + layoutCellMarginX_) * (int)cellsX_) / 2;
-    layoutOffsetY_ = (window["height"] - (layoutCellHeight_ + layoutCellMarginY_) * (int)cellsY_) / 2;
+    layoutOffsetX_ = ((int)window["width"] - (int)(layoutCellWidth_ + layoutCellMarginX_) * (int)cellsX_) / 2;
+    layoutOffsetY_ = ((int)window["height"] - (int)(layoutCellHeight_ + layoutCellMarginY_) * (int)cellsY_) / 2;
 
     size_t totalCells = cellsX_ * cellsY_;
     for (size_t i = 0; i < totalCells; ++i) {
@@ -131,7 +131,7 @@ stdoptional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
 
     if (j < 0 || cellsX_ <= j || i < 0 || cellsY_ <= i) {
         // index out of range
-        return std::nullopt;
+        return stdoptional<Size2D>();
     }
 
     x %= layoutCellWidth_ + layoutCellMarginX_;
@@ -139,14 +139,16 @@ stdoptional<Size2D> GridView::calculateCoordinatesFromXY(int x, int y) {
 
     if (x >= layoutCellWidth_ || y >= layoutCellHeight_) {
         // position in margin between tiles
-        return std::nullopt;
+        return stdoptional<Size2D>();
     }
 
     return stdoptional<Size2D>({(size_t)j, (size_t)i});
 }
 
 void GridView::enqueueActionLogDelta(MessageBus::Data actionLogDelta) {
-    for each (auto delta in (*actionLogDelta)) {
+    auto logDelta = *actionLogDelta;
+    for (auto dt = logDelta.begin(); dt != logDelta.end(); ++dt) {
+        auto delta = *dt;
         pendingActionLogDeltas_.emplace_front(delta);
     }
     enactActionLogDelta();
@@ -178,7 +180,7 @@ void GridView::fillTile(size_t j, size_t i, size_t tileType) {
     std::shared_ptr<Cell> tile = tilePool_.front();
     tilePool_.pop_front();
 
-    int height = _engine_->GetWindowConfiguration()["height"]/2;
+    int height = (int)(_engine_->GetWindowConfiguration()["height"]) / (int)2;
 
     tile->SetImage(tileImageNames_[tileType]);
     Int2D xy = calculateXYFromCoordinates(j, i);
@@ -234,11 +236,13 @@ void GridView::mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups) {
     groupsToMergeTempCopy_ = std::list<std::list<std::array<size_t, 2>>>(groups);
     tweenCountTemp_ = 0;
 
-    for each (auto mergedGroup in groups) {
+    for (auto gt = groups.begin(); gt != groups.end(); ++gt) {
+        auto mergedGroup = *gt;
         size_t minJ = std::numeric_limits<size_t>::max(), maxJ = std::numeric_limits<size_t>::min();
         size_t minI = std::numeric_limits<size_t>::max(), maxI = std::numeric_limits<size_t>::min();
 
-        for each (auto coordinates in mergedGroup) {
+        for (auto ct = mergedGroup.begin(); ct != mergedGroup.end(); ++ct) {
+            auto coordinates = *ct;
             minJ = std::min(minJ, coordinates[0]);
             maxJ = std::max(maxJ, coordinates[0]);
             minI = std::min(minI, coordinates[1]);
@@ -247,7 +251,8 @@ void GridView::mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups) {
 
         size_t halfJ = (minJ + maxJ) / 2, halfI = (minI + maxI) / 2;
 
-        for each (auto coordinates in mergedGroup) {
+        for (auto ct = mergedGroup.begin(); ct != mergedGroup.end(); ++ct) {
+            auto coordinates = *ct;
             size_t j = coordinates[0], i = coordinates[1];
 
             std::shared_ptr<Cell> tile = tileImageByCoordinates_[i][j];
@@ -270,8 +275,10 @@ void GridView::mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups) {
                     [this]() {
                         --tweenCountTemp_;
                         if (tweenCountTemp_ <= 0) {
-                            for each (auto mergedGroup in groupsToMergeTempCopy_) {
-                                for each (auto coords in mergedGroup) {
+                            for (auto gt = groupsToMergeTempCopy_.begin(); gt != groupsToMergeTempCopy_.end(); ++gt) {
+                                auto mergedGroup = *gt;
+                                for (auto rt = mergedGroup.begin(); rt != mergedGroup.end(); ++rt) {
+                                    auto coords = *rt;
                                     emptyTile(coords[0], coords[1]);
                                 }
                             }
@@ -292,8 +299,10 @@ void GridView::mergeTiles(std::list<std::list<std::array<size_t, 2>>> groups) {
                     [this]() {
                         --tweenCountTemp_;
                         if (tweenCountTemp_ <= 0) {
-                            for each (auto mergedGroup in groupsToMergeTempCopy_) {
-                                for each (auto coords in mergedGroup) {
+                            for (auto gt = groupsToMergeTempCopy_.begin(); gt != groupsToMergeTempCopy_.end(); ++gt) {
+                                auto mergedGroup = *gt;
+                                for (auto rt = mergedGroup.begin(); rt != mergedGroup.end(); ++rt) {
+                                    auto coords = *rt;
                                     emptyTile(coords[0], coords[1]);
                                 }
                             }

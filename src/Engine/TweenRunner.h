@@ -22,14 +22,16 @@ public:
             [this](const MessageBus::Key&, MessageBus::Data) -> void {
                 std::forward_list<std::shared_ptr<Tween<T>>> tweensToRemove;
 
-                for each (auto tween in tweens_) {
+                for (auto tt = tweens_.begin(); tt != tweens_.end(); ++tt) {
+                    auto tween = *tt;
                     if (tween->Update()) {
                         tweensToRemove.push_front(tween);
                         --livingTweenCount_;
                     }
                 }
 
-                for each (auto tween in tweensToRemove) {
+                for (auto tt = tweensToRemove.begin(); tt != tweensToRemove.end(); ++tt) {
+                    auto tween = *tt;
                     tweens_.erase(tween);
                 }
             }

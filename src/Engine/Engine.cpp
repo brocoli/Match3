@@ -29,7 +29,7 @@ Engine::Engine(const fs::path& currentDirectory, unsigned int randomSeed) :
     mouseInputStartY_(-1)
 {
     {
-        std::ifstream engineConfigStream(currentDirectory_ / "config" / "engine.json");
+        std::ifstream engineConfigStream((currentDirectory_ / "config" / "engine.json").generic_string());
         engineConfigStream >> engineConfig_;
     }
 
@@ -190,7 +190,8 @@ bool Engine::processInput() {
 void Engine::render() {
     SDL_RenderClear(renderer_);
 
-    for each (auto renderable in renderables_) {
+    for (auto rt = renderables_.begin(); rt != renderables_.end(); ++rt) {
+        auto renderable = *rt;
         renderable->Render(renderer_);
     }
 

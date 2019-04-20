@@ -10,7 +10,7 @@ namespace Match3 {
 void AtlasHandler::Load(const std::string& filename) {
     json configuration;
     {
-        std::ifstream atlasConfigStream(currentDirectory_ / "atlas" / (filename + ".json"));
+        std::ifstream atlasConfigStream((currentDirectory_ / "atlas" / (filename + ".json")).generic_string());
         atlasConfigStream >> configuration;
     }
 
