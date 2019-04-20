@@ -7,7 +7,12 @@ edges here and there.
 
 ## How to compile
 
-You will need git and CMake.
+You will need git (for a submodule) and CMake, as well as
+modern compilers.
+
+On Windows, use Visual Studio 16 2019 generators.
+On macOS, use the Xcode generator.
+
 Read below for instructions on project dependencies.
 
 ### Dependencies
@@ -46,7 +51,6 @@ to the specific versions I used:
 ###### macOS
 
 Use Homebrew. `brew install sdl2 sdl2_image`
-NB: macOS build is not tested/supported yet.
 
 ###### Linux
 
@@ -61,7 +65,6 @@ library's implementations of the same classes/functions
 
 Again, just use Homebrew and everything should be fine.
 `brew install boost`
-NB: macOS build is not tested/supported yet.
 
 ## Code Commentary
 
