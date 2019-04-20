@@ -93,18 +93,20 @@ target_link_libraries("${MAIN_EXECUTABLE_NAME}"
 
 ## Unit tests executable
 
-add_executable("${UNIT_TESTS_NAME}")
-set_property(TARGET "${UNIT_TESTS_NAME}" PROPERTY CXX_STANDARD 17)
+IF(NOT APPLE)
+    add_executable("${UNIT_TESTS_NAME}")
+    set_property(TARGET "${UNIT_TESTS_NAME}" PROPERTY CXX_STANDARD 17)
 
-target_include_directories("${UNIT_TESTS_NAME}"
-    ${EXECUTABLE_INCLUDE_DIRECTORIES}
-    "${CMAKE_SOURCE_DIR}/test"
-)
+    target_include_directories("${UNIT_TESTS_NAME}"
+        ${EXECUTABLE_INCLUDE_DIRECTORIES}
+        "${CMAKE_SOURCE_DIR}/test"
+    )
 
-target_link_libraries("${UNIT_TESTS_NAME}"
-    ${EXECUTABLE_LINK_LIBRARIES}
-    "Catch2::Catch2" # provided by Catch2
-)
+    target_link_libraries("${UNIT_TESTS_NAME}"
+        ${EXECUTABLE_LINK_LIBRARIES}
+        "Catch2::Catch2" # provided by Catch2
+    )
+ENDIF()
 
 ## In windows, copy the release libraries into the target's directory
 
@@ -130,8 +132,10 @@ ENDIF()
 file(GLOB_RECURSE MAIN_EXECUTABLE_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 target_sources("${MAIN_EXECUTABLE_NAME}" PRIVATE "${MAIN_EXECUTABLE_SOURCES}")
 
-file(GLOB_RECURSE UNIT_TESTS_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "test/*.cpp")
-target_sources("${UNIT_TESTS_NAME}" PRIVATE "${UNIT_TESTS_SOURCES}")
+IF(NOT APPLE)
+    file(GLOB_RECURSE UNIT_TESTS_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "test/*.cpp")
+    target_sources("${UNIT_TESTS_NAME}" PRIVATE "${UNIT_TESTS_SOURCES}")
+ENDIF()
 
 
 # Copy resource files (images, json, etc...)
@@ -146,4 +150,6 @@ FOREACH(EXECUTABLE_NAME IN LISTS EXECUTABLES)
     )
 ENDFOREACH()
 
-catch_discover_tests("${UNIT_TESTS_NAME}")
+IF(NOT APPLE)
+    catch_discover_tests("${UNIT_TESTS_NAME}")
+ENDIF()
